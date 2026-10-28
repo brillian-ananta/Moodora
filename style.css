@@ -2015,3 +2015,12 @@ input[type="range"] {
 #mood-form fieldset legend {
   padding: 0;
 }
+
+/* Hilangkan garis tepi tombol grounding */
+#start-grounding,
+#start-grounding button,
+.grounding-section button {
+  border: none !important;
+  outline: none;
+  box-shadow: none;
+}
