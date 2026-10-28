@@ -2011,3 +2011,7 @@ input[type="range"] {
   margin: 0 0 28px;
   min-width: 0;
 }
+
+#mood-form fieldset legend {
+  padding: 0;
+}
