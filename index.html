@@ -1,0 +1,399 @@
+
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#11112b">
+  <meta name="description" content="Moodora, ruang digital untuk mengenali perasaan, merawat diri, dan bertumbuh bersama.">
+  <title>Moodora — Your Feelings Matter</title>
+
+  <!-- Pastikan lokasi file CSS sesuai struktur folder -->
+  <link rel="stylesheet" href="css/style.css">
+
+  <!-- Font dari Google Fonts; website tetap dapat dibuka tanpa font ini -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+</head>
+<body>
+
+  <!-- Dekorasi latar -->
+  <div class="ambient ambient-one"></div>
+  <div class="ambient ambient-two"></div>
+  <div class="ambient ambient-three"></div>
+
+  <!-- Navigasi utama -->
+  <header class="topbar">
+    <a href="#home" class="brand" data-page="home" aria-label="Moodora beranda">
+      <span class="brand-icon">✳</span>
+      moodora<span class="brand-dot">.</span>
+    </a>
+
+    <button class="menu-toggle" id="menu-toggle"
+      aria-label="Buka menu navigasi" aria-expanded="false">
+      <span></span><span></span><span></span>
+    </button>
+
+    <nav class="nav-links" id="nav-links" aria-label="Navigasi utama">
+      <a href="#home" data-page="home" class="nav-link active">Home</a>
+      <a href="#mood" data-page="mood" class="nav-link">My Mood</a>
+      <a href="#selfcheck" data-page="selfcheck" class="nav-link">Self-check</a>
+      <a href="#calm" data-page="calm" class="nav-link">Calm Corner</a>
+      <a href="#journal" data-page="journal" class="nav-link">My Journal</a>
+    </nav>
+
+    <button class="nav-cta" data-page="mood">Check in <span>↗</span></button>
+  </header>
+
+  <main id="main-content">
+
+    <!-- ================= HOME ================= -->
+    <section class="page active" id="page-home" data-title="Home">
+      <div class="hero">
+        <div class="hero-copy reveal">
+          <div class="eyebrow"><span class="live-dot"></span> A LITTLE SPACE JUST FOR YOU</div>
+
+          <h1>
+            Hey, you.<br>
+            <span class="gradient-text">How's your</span><br>
+            heart today<span class="question-mark">?</span>
+          </h1>
+
+          <p class="hero-description">
+            Hidup nggak harus selalu baik-baik aja.
+            Di sini, kamu boleh merasa apa pun yang sedang kamu rasakan.
+            No pressure, just you.
+          </p>
+
+          <div class="hero-actions">
+            <button class="btn btn-primary" data-page="mood">
+              Explore your mood <span>↗</span>
+            </button>
+            <button class="btn btn-ghost" data-page="calm">
+              <span>▷</span> Take a breath
+            </button>
+          </div>
+
+          <div class="hero-note">
+            <div class="avatar-stack">
+              <span>🌻</span><span>☁️</span><span>🌙</span>
+            </div>
+            <p>A safe little corner to be yourself.</p>
+          </div>
+        </div>
+
+        <!-- Ilustrasi CSS dengan animasi melayang -->
+        <div class="hero-art reveal" aria-label="Ilustrasi planet dan bintang">
+          <div class="orbit orbit-one"></div>
+          <div class="orbit orbit-two"></div>
+          <div class="planet">
+            <div class="planet-shine"></div>
+            <div class="planet-face">☺</div>
+          </div>
+          <span class="float-item star star-one">✦</span>
+          <span class="float-item star star-two">✧</span>
+          <span class="float-item star star-three">✦</span>
+          <span class="float-item mini-planet">✳</span>
+          <div class="floating-note note-one">
+            <span>☁️</span><div><b>It's okay</b><small>to slow down</small></div>
+          </div>
+          <div class="floating-note note-two">
+            <span>💜</span><div><b>You matter</b><small>always remember</small></div>
+          </div>
+          <div class="art-caption">your universe, your pace ✷</div>
+        </div>
+      </div>
+
+      <div class="home-welcome reveal">
+        <div>
+          <span class="section-kicker">YOUR DAILY REMINDER</span>
+          <h2>One day at a time<span class="gradient-text">.</span></h2>
+          <p>Kamu nggak harus menyelesaikan semuanya hari ini.</p>
+        </div>
+        <div class="welcome-sparkle">✳</div>
+      </div>
+
+      <div class="section-heading reveal">
+        <div>
+          <span class="section-kicker">PICK YOUR VIBE</span>
+          <h2>What do you need <span>right now?</span></h2>
+        </div>
+        <p>Ikuti apa yang kamu butuhkan.</p>
+      </div>
+
+      <div class="feature-grid">
+        <button class="feature-card mood-card reveal" data-page="mood">
+          <span class="feature-icon">🎭</span>
+          <span class="feature-arrow">↗</span>
+          <h3>Feel it</h3>
+          <p>Kenali mood kamu, tanpa perlu berpura-pura.</p>
+          <span class="feature-bottom">MOOD CHECK-IN</span>
+        </button>
+
+        <button class="feature-card calm-card reveal" data-page="calm">
+          <span class="feature-icon">🪐</span>
+          <span class="feature-arrow">↗</span>
+          <h3>Slow down</h3>
+          <p>Ambil jeda kecil dari dunia yang berisik.</p>
+          <span class="feature-bottom">CALM CORNER</span>
+        </button>
+
+        <button class="feature-card journal-card reveal" data-page="journal">
+          <span class="feature-icon">📝</span>
+          <span class="feature-arrow">↗</span>
+          <h3>Let it out</h3>
+          <p>Tulis hal yang sulit kamu ungkapkan.</p>
+          <span class="feature-bottom">MY JOURNAL</span>
+        </button>
+
+        <button class="feature-card check-card reveal" data-page="selfcheck">
+          <span class="feature-icon">🔮</span>
+          <span class="feature-arrow">↗</span>
+          <h3>Know yourself</h3>
+          <p>Berhenti sejenak dan dengarkan dirimu.</p>
+          <span class="feature-bottom">SELF-CHECK</span>
+        </button>
+      </div>
+
+      <div class="quote-banner reveal">
+        <span class="quote-mark">“</span>
+        <p>You are allowed to be both a masterpiece and a work in progress.</p>
+        <span class="quote-author">A REMINDER FROM MOODORA ✦</span>
+      </div>
+    </section>
+
+    <!-- ================= MOOD CHECK-IN ================= -->
+    <section class="page" id="page-mood" data-title="My Mood">
+      <div class="page-intro">
+        <span class="section-kicker">LET'S CHECK IN</span>
+        <h1>What's the <span class="gradient-text">vibe</span> today?</h1>
+        <p>Nggak ada jawaban benar atau salah. Pilih yang paling menggambarkan dirimu.</p>
+      </div>
+
+      <form id="mood-form" class="panel mood-panel">
+        <h2>01. Pick your current mood</h2>
+        <div class="mood-options">
+          <button type="button" class="mood-option" data-mood="Senang" data-emoji="😄">
+            <span>😄</span><b>Happy</b>
+          </button>
+          <button type="button" class="mood-option" data-mood="Tenang" data-emoji="😌">
+            <span>😌</span><b>Chill</b>
+          </button>
+          <button type="button" class="mood-option" data-mood="Biasa saja" data-emoji="😐">
+            <span>😐</span><b>Meh</b>
+          </button>
+          <button type="button" class="mood-option" data-mood="Sedih" data-emoji="😔">
+            <span>😔</span><b>Low</b>
+          </button>
+          <button type="button" class="mood-option" data-mood="Cemas" data-emoji="😵‍💫">
+            <span>😵‍💫</span><b>Anxious</b>
+          </button>
+          <button type="button" class="mood-option" data-mood="Lelah" data-emoji="🥱">
+            <span>🥱</span><b>Drained</b>
+          </button>
+        </div>
+
+        <div class="form-block">
+          <div class="range-heading">
+            <label for="mood-intensity">02. Seberapa kuat perasaanmu?</label>
+            <output id="intensity-value" for="mood-intensity">3 / 5</output>
+          </div>
+          <input type="range" id="mood-intensity" min="1" max="5" value="3">
+          <div class="range-labels"><span>Pelan</span><span>Intens</span></div>
+        </div>
+
+        <div class="form-block">
+          <label for="mood-reason">03. Ada sesuatu yang memengaruhinya?</label>
+          <select id="mood-reason">
+            <option value="Tidak tahu pasti">Belum tahu pasti</option>
+            <option value="Sekolah atau tugas">Sekolah / tugas</option>
+            <option value="Teman atau hubungan">Teman / hubungan</option>
+            <option value="Keluarga">Keluarga</option>
+            <option value="Diri sendiri">Pikiran tentang diri sendiri</option>
+            <option value="Istirahat dan fisik">Kurang tidur / kelelahan</option>
+            <option value="Hal menyenangkan">Ada hal menyenangkan</option>
+          </select>
+        </div>
+
+        <button class="btn btn-primary btn-full" type="submit">Save my check-in ✦</button>
+        <div id="mood-result" class="result-box" aria-live="polite" hidden></div>
+      </form>
+
+      <div class="panel history-panel">
+        <div class="panel-heading">
+          <div><span class="section-kicker">YOUR JOURNEY</span><h2>Recent check-ins</h2></div>
+          <span class="panel-emoji">📈</span>
+        </div>
+        <div id="mood-history" class="history-list">
+          <p class="empty-state">Belum ada check-in. Yuk, mulai dengan satu perasaan hari ini.</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- ================= SELF CHECK ================= -->
+    <section class="page" id="page-selfcheck" data-title="Self-check">
+      <div class="page-intro">
+        <span class="section-kicker">A MOMENT WITH YOURSELF</span>
+        <h1>Check in with <span class="gradient-text">you.</span></h1>
+        <p>Refleksi singkat tentang beberapa hari terakhir. Jawab sesuai pengalamanmu, bukan sesuai harapan orang lain.</p>
+      </div>
+
+      <div class="notice">
+        <span>💜</span>
+        <p>Ini bukan tes diagnosis atau alat untuk menentukan kondisi medis. Hasilnya hanya bahan refleksi diri.</p>
+      </div>
+
+      <form id="selfcheck-form" class="panel">
+        <div class="progress-wrap">
+          <div class="progress-track"><div id="quiz-progress"></div></div>
+          <span id="quiz-count">Pertanyaan 1 dari 6</span>
+        </div>
+
+        <div id="quiz-question" class="quiz-question"></div>
+        <div id="quiz-options" class="quiz-options"></div>
+
+        <div class="quiz-actions">
+          <button type="button" class="btn btn-ghost" id="quiz-back" disabled>← Kembali</button>
+          <button type="button" class="btn btn-primary" id="quiz-next" disabled>Selanjutnya →</button>
+        </div>
+        <div id="quiz-result" class="result-box" aria-live="polite" hidden></div>
+      </form>
+    </section>
+
+    <!-- ================= CALM CORNER ================= -->
+    <section class="page" id="page-calm" data-title="Calm Corner">
+      <div class="page-intro">
+        <span class="section-kicker">PAUSE THE NOISE</span>
+        <h1>Find your <span class="gradient-text">soft space.</span></h1>
+        <p>Nggak harus langsung merasa lebih baik. Kita mulai dengan satu napas saja.</p>
+      </div>
+
+      <div class="breathing-panel panel">
+        <span class="section-kicker">GUIDED BREATHING</span>
+        <div class="breath-scene">
+          <div class="breath-orbit orbit-one"></div>
+          <div class="breath-orbit orbit-two"></div>
+          <div class="breath-circle" id="breath-circle">
+            <span id="breath-phase">Ready?</span>
+          </div>
+        </div>
+        <h2 id="breath-title">Let's take it slow.</h2>
+        <p id="breath-description">Cari posisi yang nyaman. Kamu boleh berhenti kapan saja.</p>
+        <div class="breath-timer" id="breath-timer">01:00</div>
+        <div class="breath-controls">
+          <button class="btn btn-primary" id="breath-start">Start breathing ✦</button>
+          <button class="btn btn-ghost" id="breath-reset">Reset</button>
+        </div>
+        <p class="tiny-note">Tarik dan embuskan napas dengan nyaman, tanpa memaksakan diri.</p>
+      </div>
+
+      <div class="section-heading">
+        <div><span class="section-kicker">TINY RESET</span><h2>Choose your little escape.</h2></div>
+      </div>
+      <div class="reset-grid">
+        <button class="reset-card" data-reset="grounding"><span>🌱</span><b>5-4-3-2-1</b><small>Latihan grounding</small></button>
+        <button class="reset-card" data-reset="gratitude"><span>🌷</span><b>Little gratitude</b><small>Hal kecil yang berarti</small></button>
+        <button class="reset-card" data-reset="kindness"><span>🫶</span><b>Kind to yourself</b><small>Pesan untuk diri sendiri</small></button>
+      </div>
+      <div id="reset-result" class="panel reset-result" aria-live="polite" hidden></div>
+    </section>
+
+    <!-- ================= JOURNAL ================= -->
+    <section class="page" id="page-journal" data-title="My Journal">
+      <div class="page-intro">
+        <span class="section-kicker">A NOTE TO YOURSELF</span>
+        <h1>Your thoughts, <span class="gradient-text">your space.</span></h1>
+        <p>Tulis saja. Kamu tidak harus merangkai kata-kata yang sempurna.</p>
+      </div>
+
+      <form id="journal-form" class="panel journal-panel">
+        <label for="journal-title">Judul catatan</label>
+        <input type="text" id="journal-title" maxlength="80" placeholder="Contoh: Hari yang cukup berat..." required>
+
+        <label for="journal-mood">Mood hari ini</label>
+        <select id="journal-mood">
+          <option>😌 Tenang</option><option>😄 Senang</option>
+          <option>😐 Biasa saja</option><option>😔 Sedih</option>
+          <option>😵‍💫 Cemas</option><option>🥱 Lelah</option>
+        </select>
+
+        <label for="journal-content">What's on your mind?</label>
+        <textarea id="journal-content" rows="7" maxlength="5000"
+          placeholder="Tulis apa pun yang sedang kamu rasakan..." required></textarea>
+        <div class="journal-bottom">
+          <span id="journal-counter">0 / 5000</span>
+          <button class="btn btn-primary" type="submit">Save my note ✦</button>
+        </div>
+        <p class="tiny-note">Catatan disimpan di browser perangkat ini. Hindari menulis kata sandi atau informasi sangat pribadi.</p>
+      </form>
+
+      <div class="section-heading">
+        <div><span class="section-kicker">YOUR LITTLE ARCHIVE</span><h2>Notes to remember.</h2></div>
+        <span class="panel-emoji">📓</span>
+      </div>
+      <div id="journal-list" class="journal-list"></div>
+    </section>
+
+    <!-- ================= SMALL STEPS ================= -->
+    <section class="page" id="page-steps" data-title="Small Steps">
+      <div class="page-intro">
+        <span class="section-kicker">SMALL IS STILL PROGRESS</span>
+        <h1>Little steps, <span class="gradient-text">big meaning.</span></h1>
+        <p>Kamu nggak harus mengubah hidup dalam sehari. Pilih satu hal kecil yang terasa mungkin dilakukan.</p>
+      </div>
+
+      <div class="steps-summary panel">
+        <div><span class="section-kicker">TODAY'S PROGRESS</span><h2 id="steps-progress-text">0 of 5 completed</h2></div>
+        <div class="steps-progress-circle" id="steps-circle"><span id="steps-percent">0%</span></div>
+      </div>
+      <div id="steps-list" class="steps-list"></div>
+      <button class="btn btn-ghost" id="steps-reset">Reset today's checklist ↻</button>
+    </section>
+
+    <!-- ================= SUPPORT ================= -->
+    <section class="page" id="page-support" data-title="Get Support">
+      <div class="page-intro">
+        <span class="section-kicker">YOU DON'T HAVE TO DO IT ALONE</span>
+        <h1>It's okay to <span class="gradient-text">reach out.</span></h1>
+        <p>Meminta bantuan bukan tanda kelemahan. Kamu berhak didengarkan dan mendapat dukungan.</p>
+      </div>
+
+      <div class="support-grid">
+        <article class="support-card panel">
+          <span class="feature-icon">🫂</span><h2>Someone you trust</h2>
+          <p>Coba mulai dari teman, orang tua, guru BK, wali kelas, atau orang dewasa yang membuatmu merasa aman.</p>
+        </article>
+        <article class="support-card panel">
+          <span class="feature-icon">☎️</span><h2>Professional support</h2>
+          <p>Jika perasaan berat terus berlanjut atau mengganggu kegiatanmu, psikolog atau tenaga kesehatan dapat membantu.</p>
+        </article>
+        <article class="support-card panel emergency-card">
+          <span class="feature-icon">💗</span><h2>Need urgent help?</h2>
+          <p>Jika kamu merasa tidak aman atau berisiko menyakiti diri, segera dekati orang yang kamu percaya dan cari bantuan darurat setempat. Jangan hadapi situasi ini sendirian.</p>
+          <a class="btn btn-primary" href="https://www.healing119.id/" target="_blank" rel="noopener noreferrer">Kunjungi Healing119.id ↗</a>
+          <p class="tiny-note">Periksa situs resmi untuk mengetahui layanan, jam operasional, dan cara mengakses bantuan terkini.</p>
+        </article>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- Footer selalu berada di bawah halaman -->
+  <footer class="footer">
+    <a href="#home" data-page="home" class="brand"><span class="brand-icon">✳</span> moodora<span class="brand-dot">.</span></a>
+    <p>Made with care, for every version of you. 💜</p>
+    <div class="footer-links">
+      <button data-page="steps">Small Steps</button>
+      <button data-page="support">Get Support</button>
+    </div>
+    <small>© <span id="current-year"></span> Moodora. Ruang refleksi, bukan pengganti bantuan profesional.</small>
+  </footer>
+
+  <!-- Toast untuk notifikasi interaksi -->
+  <div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+  <!-- Path harus sesuai dengan lokasi script.js -->
+  <script src="js/script.js" defer></script>
+</body>
+</html>
