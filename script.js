@@ -253,15 +253,37 @@ const MOOD_INFO = {
 };
 
 function initMoodCheckIn() {
-  const form = $("#mood-form") || $(".mood-form");
-  const intensity = $("#mood-intensity");
-  const result = $("#mood-result");
-  const intensityValue = $("#mood-intensity-value");
+  const form = document.querySelector("#mood-form")
+    || document.querySelector(".mood-form");
 
-  if (intensity && intensityValue) {
-    intensity.addEventListener("input", () => {
-      intensityValue.textContent = intensity.value;
-    });
+  const intensity = document.querySelector("#mood-intensity");
+  const result = document.querySelector("#mood-result");
+
+  // Tampilkan nilai slider secara langsung.
+  let intensityValue = document.querySelector("#mood-intensity-value");
+
+  if (intensity && !intensityValue) {
+    intensityValue = document.createElement("span");
+    intensityValue.id = "mood-intensity-value";
+    intensityValue.className = "intensity-value";
+    intensity.insertAdjacentElement("afterend", intensityValue);
+  }
+
+  function updateIntensity() {
+    if (!intensity) return;
+
+    const value = Number(intensity.value);
+    if (intensityValue) {
+      intensityValue.textContent = `${value}/5`;
+    }
+
+    intensity.setAttribute("aria-valuetext", `${value} dari 5`);
+  }
+
+  if (intensity) {
+    updateIntensity();
+    intensity.addEventListener("input", updateIntensity);
+    intensity.addEventListener("change", updateIntensity);
   }
 
   if (!form) return;
@@ -269,40 +291,45 @@ function initMoodCheckIn() {
   form.addEventListener("submit", event => {
     event.preventDefault();
 
-    const selectedMood = $(
-      'input[name="mood"]:checked, input[name="mood-choice"]:checked, ' +
-      'input[name="feeling"]:checked',
-      form
+    const selectedMood = form.querySelector(
+      'input[name="mood"]:checked, ' +
+      'input[name="mood-choice"]:checked, ' +
+      'input[name="feeling"]:checked'
     );
 
-    const moodValue =
-      selectedMood?.value ||
-      form.querySelector("[data-mood].selected")?.dataset.mood ||
-      form.querySelector("[data-mood].is-selected")?.dataset.mood;
+    const selectedCard = form.querySelector(
+      "[data-mood].selected, [data-mood].is-selected"
+    );
+
+    const moodValue = selectedMood?.value || selectedCard?.dataset.mood;
 
     if (!moodValue) {
-      showToast("Pilih suasana hati yang paling menggambarkan dirimu.");
+      showToast("Pilih suasana hati kamu terlebih dahulu.");
       return;
     }
 
+    // Baca nilai terbaru ketika tombol simpan ditekan.
+    const intensityNumber = Number(intensity?.value ?? 3);
     const mood = MOOD_INFO[moodValue] || {
       label: moodValue,
       emoji: "💭",
-      message: "Terima kasih sudah meluangkan waktu untuk memahami dirimu."
+      message: "Terima kasih sudah mengenali perasaanmu."
     };
 
-    const factors = $$(
-      'input[name="factor"]:checked, input[name="mood-factor"]:checked, ' +
-      'input[name="trigger"]:checked',
-      form
-    ).map(input => input.value);
+    const factors = [
+      ...form.querySelectorAll(
+        'input[name="factor"]:checked, ' +
+        'input[name="mood-factor"]:checked, ' +
+        'input[name="trigger"]:checked'
+      )
+    ].map(input => input.value);
 
     const entry = {
       id: Date.now(),
       date: todayString(),
       mood: moodValue,
       label: mood.label,
-      intensity: Number(intensity?.value || 3),
+      intensity: intensityNumber,
       factors,
       createdAt: new Date().toISOString()
     };
@@ -312,21 +339,29 @@ function initMoodCheckIn() {
 
     if (!saveStorage(STORAGE_KEYS.moods, moods)) return;
 
+    // Hasil menunjukkan nilai yang benar-benar dipilih.
     if (result) {
-      result.textContent = `${mood.emoji} ${mood.message}`;
+      result.replaceChildren();
+
+      const heading = document.createElement("strong");
+      heading.textContent =
+        `${mood.emoji} ${mood.label} — Intensitas ${intensityNumber}/5`;
+
+      const description = document.createElement("p");
+      description.textContent = mood.message;
+
+      result.append(heading, description);
       result.hidden = false;
     }
 
     renderMoodHistory();
     renderMoodInsights();
-    showToast("Check-in berhasil disimpan. Terima kasih sudah jujur pada diri sendiri.");
-
-    form.reset();
-
-    if (intensity) intensity.value = "3";
-    if (intensityValue) intensityValue.textContent = "3";
+    showToast(`Mood tersimpan dengan intensitas ${intensityNumber}/5.`);
   });
 
+  renderMoodHistory();
+  renderMoodInsights();
+}
   // Memilih mood melalui kartu atau tombol data-mood.
   $$("[data-mood]").forEach(button => {
     button.addEventListener("click", () => {
