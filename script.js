@@ -1,990 +1,1263 @@
+/* =========================================================
+   MOODORA — YOUR FEELINGS, YOUR SPACE
+   File: js/script.js
 
-/* =========================================
-   MOODORA — INTERACTIVE JAVASCRIPT
-   Tanpa framework dan tanpa database
-   ========================================= */
+   Fitur:
+   - Navigasi responsif
+   - Mood Check-in
+   - Kuesioner refleksi 10 pertanyaan
+   - Calm Corner (latihan pernapasan)
+   - Daily Journal
+   - Small Steps
+   - Penyimpanan lokal dan penghapusan data
+   - Notifikasi dan animasi sederhana
+   ========================================================= */
 
 "use strict";
 
-// Helper untuk mengambil elemen HTML
-const $ = (selector) => document.querySelector(selector);
-const $$ = (selector) => [...document.querySelectorAll(selector)];
+/* =========================================================
+   1. KONFIGURASI DAN UTILITAS
+   ========================================================= */
 
-// =========================================
-// 1. PENYIMPANAN LOKAL YANG AMAN
-// =========================================
+const STORAGE_KEYS = {
+  moods: "moodora_moods",
+  journals: "moodora_journals",
+  habits: "moodora_habits",
+  questionnaire: "moodora_questionnaire"
+};
 
-function loadData(key, fallback = []) {
+const $ = (selector, parent = document) =>
+  parent.querySelector(selector);
+
+const $$ = (selector, parent = document) =>
+  [...parent.querySelectorAll(selector)];
+
+function readStorage(key, fallback = []) {
   try {
     const value = localStorage.getItem(key);
     return value ? JSON.parse(value) : fallback;
   } catch (error) {
-    console.warn("Data tidak dapat dibaca:", error);
+    console.warn(`Gagal membaca data ${key}:`, error);
     return fallback;
   }
 }
 
-function saveData(key, value) {
+function saveStorage(key, value) {
   try {
     localStorage.setItem(key, JSON.stringify(value));
     return true;
   } catch (error) {
-    console.warn("Data tidak dapat disimpan:", error);
-    showToast("Penyimpanan gagal. Periksa pengaturan browser.");
+    console.warn(`Gagal menyimpan data ${key}:`, error);
+    showToast("Data tidak dapat disimpan di browser ini.");
     return false;
   }
 }
 
-// localStorage hanya untuk perangkat/browser ini.
-// Jangan menganggapnya sebagai penyimpanan rahasia.
+function escapeHTML(value) {
+  return String(value ?? "").replace(/[&<>"']/g, character => ({
+    "&": "&amp;",
+    "<": "&lt;",
+    ">": "&gt;",
+    '"': "&quot;",
+    "'": "&#039;"
+  })[character]);
+}
 
-// =========================================
-// 2. TOAST NOTIFICATION
-// =========================================
+function todayString() {
+  const now = new Date();
+  const offset = now.getTimezoneOffset() * 60000;
+  return new Date(now.getTime() - offset).toISOString().slice(0, 10);
+}
 
-let toastTimeout;
+function formatDate(dateString) {
+  const date = new Date(`${dateString}T00:00:00`);
+
+  if (Number.isNaN(date.getTime())) return dateString;
+
+  return new Intl.DateTimeFormat("id-ID", {
+    day: "numeric",
+    month: "long",
+    year: "numeric"
+  }).format(date);
+}
 
 function showToast(message) {
-  const toast = $("#toast");
-  if (!toast) return;
+  let container = $("#toast-container");
 
+  if (!container) {
+    container = document.createElement("div");
+    container.id = "toast-container";
+    container.setAttribute("aria-live", "polite");
+    container.style.cssText = `
+      position: fixed;
+      right: 20px;
+      bottom: 20px;
+      z-index: 9999;
+      display: grid;
+      gap: 10px;
+      max-width: min(360px, calc(100vw - 40px));
+    `;
+    document.body.appendChild(container);
+  }
+
+  const toast = document.createElement("div");
   toast.textContent = message;
-  toast.classList.add("show");
+  toast.style.cssText = `
+    padding: 13px 17px;
+    border-radius: 14px;
+    color: #ffffff;
+    background: #303447;
+    box-shadow: 0 8px 28px rgba(0,0,0,.16);
+    font-size: 14px;
+    line-height: 1.5;
+    animation: moodoraToastIn .25s ease;
+  `;
 
-  clearTimeout(toastTimeout);
-  toastTimeout = setTimeout(() => {
-    toast.classList.remove("show");
-  }, 2800);
+  container.appendChild(toast);
+
+  window.setTimeout(() => {
+    toast.style.opacity = "0";
+    toast.style.transform = "translateY(8px)";
+    toast.style.transition = "opacity .2s, transform .2s";
+
+    window.setTimeout(() => toast.remove(), 250);
+  }, 3000);
 }
 
-// =========================================
-// 3. NAVIGASI DAN TRANSISI HALAMAN
-// =========================================
+function scrollToElement(element) {
+  if (!element) return;
 
-const validPages = [
-  "home", "mood", "selfcheck", "calm",
-  "journal", "steps", "support"
-];
-
-function navigateTo(page, updateHistory = true) {
-  if (!validPages.includes(page)) page = "home";
-
-  const target = $(`#page-${page}`);
-  if (!target) return;
-
-  $$(".page").forEach((section) => {
-    section.classList.remove("active");
+  element.scrollIntoView({
+    behavior: window.matchMedia("(prefers-reduced-motion: reduce)").matches
+      ? "auto"
+      : "smooth",
+    block: "start"
   });
-
-  target.classList.add("active");
-
-  $$(".nav-link").forEach((link) => {
-    const active = link.dataset.page === page;
-    link.classList.toggle("active", active);
-
-    if (active) {
-      link.setAttribute("aria-current", "page");
-    } else {
-      link.removeAttribute("aria-current");
-    }
-  });
-
-  $("#nav-links").classList.remove("open");
-  $("#menu-toggle").setAttribute("aria-expanded", "false");
-
-  document.title =
-    `${target.dataset.title || "Moodora"} — Moodora`;
-
-  if (updateHistory) {
-    history.pushState({ page }, "", `#${page}`);
-  }
-
-  // Scroll ke atas setelah pindah halaman
-  window.scrollTo({ top: 0, behavior: "smooth" });
-
-  // Jalankan kembali animasi elemen
-  setupReveal(target);
 }
 
-$$("[data-page]").forEach((element) => {
-  element.addEventListener("click", (event) => {
-    event.preventDefault();
-    navigateTo(element.dataset.page);
+function bindClick(selector, callback) {
+  $$(selector).forEach(element => {
+    element.addEventListener("click", callback);
   });
-});
+}
 
-// Tombol Back/Forward browser
-window.addEventListener("popstate", () => {
-  const page = location.hash.replace("#", "") || "home";
-  navigateTo(page, false);
-});
+/* =========================================================
+   2. NAVIGASI RESPONSIF
+   ========================================================= */
 
-// Menu HP
-$("#menu-toggle").addEventListener("click", () => {
-  const menu = $("#nav-links");
-  const open = menu.classList.toggle("open");
+function initNavigation() {
+  const menuToggle = $("#menu-toggle");
+  const navMenu = $("#nav-menu") || $("#primary-nav");
 
-  $("#menu-toggle").setAttribute("aria-expanded", String(open));
-});
+  if (menuToggle && navMenu) {
+    menuToggle.addEventListener("click", () => {
+      const isOpen = navMenu.classList.toggle("is-open");
 
-// Inisialisasi halaman dari URL
-const initialPage = location.hash.replace("#", "");
-navigateTo(
-  validPages.includes(initialPage) ? initialPage : "home",
-  false
-);
+      menuToggle.setAttribute("aria-expanded", String(isOpen));
+      menuToggle.setAttribute(
+        "aria-label",
+        isOpen ? "Tutup menu navigasi" : "Buka menu navigasi"
+      );
+    });
 
-$("#current-year").textContent = new Date().getFullYear();
+    $$(".nav-link, .nav-cta", navMenu).forEach(link => {
+      link.addEventListener("click", () => {
+        navMenu.classList.remove("is-open");
+        menuToggle.setAttribute("aria-expanded", "false");
+      });
+    });
 
-// =========================================
-// 4. ANIMASI SCROLL REVEAL
-// =========================================
-
-let revealObserver;
-
-function setupReveal(container = document) {
-  if (revealObserver) revealObserver.disconnect();
-
-  const reducedMotion = window.matchMedia(
-    "(prefers-reduced-motion: reduce)"
-  ).matches;
-
-  if (reducedMotion || !("IntersectionObserver" in window)) {
-    $$(".reveal").forEach((item) => item.classList.add("visible"));
-    return;
-  }
-
-  revealObserver = new IntersectionObserver((entries) => {
-    entries.forEach((entry) => {
-      if (entry.isIntersecting) {
-        entry.target.classList.add("visible");
-        revealObserver.unobserve(entry.target);
+    document.addEventListener("keydown", event => {
+      if (event.key === "Escape") {
+        navMenu.classList.remove("is-open");
+        menuToggle.setAttribute("aria-expanded", "false");
       }
     });
-  }, { threshold: 0.12 });
-
-  container.querySelectorAll(".reveal:not(.visible)")
-    .forEach((item, index) => {
-      item.style.transitionDelay = `${Math.min(index * 65, 260)}ms`;
-      revealObserver.observe(item);
-    });
-}
-
-setupReveal();
-
-// =========================================
-// 5. MOOD CHECK-IN
-// =========================================
-
-let selectedMood = null;
-let selectedEmoji = null;
-
-const moodForm = $("#mood-form");
-const moodIntensity = $("#mood-intensity");
-const intensityValue = $("#intensity-value");
-
-moodIntensity.addEventListener("input", () => {
-  intensityValue.value = `${moodIntensity.value} / 5`;
-  intensityValue.textContent = `${moodIntensity.value} / 5`;
-});
-
-$$(".mood-option").forEach((button) => {
-  button.addEventListener("click", () => {
-    $$(".mood-option").forEach((item) => {
-      item.classList.remove("selected");
-      item.setAttribute("aria-pressed", "false");
-    });
-
-    button.classList.add("selected");
-    button.setAttribute("aria-pressed", "true");
-
-    selectedMood = button.dataset.mood;
-    selectedEmoji = button.dataset.emoji;
-
-    // Efek kecil saat emoji dipilih
-    const emoji = button.querySelector("span");
-    emoji.animate(
-      [
-        { transform: "scale(1)" },
-        { transform: "scale(1.3) rotate(-8deg)" },
-        { transform: "scale(1)" }
-      ],
-      { duration: 300, easing: "ease-out" }
-    );
-  });
-});
-
-function getMoodMessage(mood, intensity) {
-  if (mood === "Senang") {
-    return "Nikmati momen baik ini. Kalau mau, catat hal kecil yang membuatmu tersenyum.";
   }
 
-  if (mood === "Tenang") {
-    return "Senang kamu punya ruang untuk merasa tenang. Kamu boleh menikmati jeda ini.";
-  }
+  // Tandai menu sesuai bagian yang sedang terlihat.
+  const navLinks = $$(".nav-link");
 
-  if (mood === "Biasa saja") {
-    return "Kamu tidak harus merasa luar biasa setiap hari. Hari biasa pun tetap berarti.";
-  }
+  if ("IntersectionObserver" in window && navLinks.length) {
+    const sections = navLinks
+      .map(link => {
+        const href = link.getAttribute("href");
+        return href?.startsWith("#") ? $(href) : null;
+      })
+      .filter(Boolean);
 
-  if (mood === "Sedih") {
-    return intensity >= 4
-      ? "Perasaanmu layak mendapat perhatian. Coba hubungi orang yang kamu percaya jika kamu membutuhkan teman."
-      : "Tidak apa-apa merasa sedih. Beri dirimu waktu dan jangan memaksakan diri untuk segera ceria.";
-  }
+    const observer = new IntersectionObserver(entries => {
+      entries.forEach(entry => {
+        if (!entry.isIntersecting) return;
 
-  if (mood === "Cemas") {
-    return intensity >= 4
-      ? "Kalau terasa sangat berat, coba dekati seseorang yang membuatmu merasa aman. Kamu tidak harus menghadapi semuanya sendirian."
-      : "Coba berhenti sejenak dan perhatikan apa yang ada di sekitarmu. Kamu boleh mengambil satu langkah kecil.";
-  }
+        navLinks.forEach(link => {
+          const active = link.getAttribute("href") === `#${entry.target.id}`;
 
-  return intensity >= 4
-    ? "Kamu boleh beristirahat dan meminta bantuan untuk hal yang terasa berat. Tidak semuanya harus kamu tanggung sendiri."
-    : "Mungkin kamu butuh jeda. Minum air, beristirahat, atau kurangi kegiatan sejenak jika memungkinkan.";
-}
+          link.classList.toggle("active", active);
 
-moodForm.addEventListener("submit", (event) => {
-  event.preventDefault();
-
-  if (!selectedMood) {
-    showToast("Pilih emoji mood kamu terlebih dahulu 💜");
-    return;
-  }
-
-  const entry = {
-    id: Date.now(),
-    mood: selectedMood,
-    emoji: selectedEmoji,
-    intensity: Number(moodIntensity.value),
-    reason: $("#mood-reason").value,
-    date: new Date().toISOString()
-  };
-
-  const history = loadData("moodora-moods");
-  history.unshift(entry);
-
-  if (!saveData("moodora-moods", history.slice(0, 30))) return;
-
-  const result = $("#mood-result");
-  result.replaceChildren();
-
-  const title = document.createElement("h3");
-  title.textContent = `${entry.emoji} Your mood matters.`;
-
-  const message = document.createElement("p");
-  message.textContent = getMoodMessage(entry.mood, entry.intensity);
-
-  const detail = document.createElement("p");
-  detail.className = "result-action";
-  detail.textContent =
-    `Mood: ${entry.mood} · Intensitas ${entry.intensity}/5 · Faktor: ${entry.reason}`;
-
-  result.append(title, message, detail);
-  result.hidden = false;
-
-  renderMoodHistory();
-  showToast("Check-in kamu tersimpan ✦");
-});
-
-function renderMoodHistory() {
-  const container = $("#mood-history");
-  const history = loadData("moodora-moods");
-
-  container.replaceChildren();
-
-  if (!history.length) {
-    const empty = document.createElement("p");
-    empty.className = "empty-state";
-    empty.textContent = "Belum ada check-in. Yuk, mulai dengan satu perasaan hari ini.";
-    container.append(empty);
-    return;
-  }
-
-  history.slice(0, 5).forEach((entry) => {
-    const item = document.createElement("div");
-    item.className = "history-item";
-
-    const emoji = document.createElement("span");
-    emoji.className = "history-emoji";
-    emoji.textContent = entry.emoji;
-
-    const detail = document.createElement("div");
-    detail.className = "history-detail";
-
-    const title = document.createElement("b");
-    title.textContent = entry.mood;
-
-    const date = document.createElement("small");
-    const parsedDate = new Date(entry.date);
-    date.textContent =
-      `${parsedDate.toLocaleDateString("id-ID")} · Intensitas ${entry.intensity}/5`;
-
-    detail.append(title, date);
-    item.append(emoji, detail);
-    container.append(item);
-  });
-}
-
-renderMoodHistory();
-
-// =========================================
-// 6. SELF-CHECK / REFLEKSI DIRI
-// =========================================
-
-// Pertanyaan refleksi, bukan instrumen diagnosis klinis.
-const quizQuestions = [
-  {
-    question: "Bagaimana perasaanmu akhir-akhir ini?",
-    description: "Pikirkan beberapa hari terakhir.",
-    options: [
-      "Cukup baik dan stabil",
-      "Kadang naik, kadang turun",
-      "Lebih sering merasa berat",
-      "Sulit menjelaskan perasaanku"
-    ]
-  },
-  {
-    question: "Bagaimana kualitas tidurmu?",
-    description: "Tidak harus sempurna.",
-    options: [
-      "Cukup nyaman",
-      "Sedikit berubah dari biasanya",
-      "Sering terganggu",
-      "Aku sangat kesulitan tidur atau beristirahat"
-    ]
-  },
-  {
-    question: "Bagaimana energimu menjalani aktivitas?",
-    description: "Sekolah, rumah, hobi, atau kegiatan harian.",
-    options: [
-      "Masih punya cukup energi",
-      "Kadang cepat lelah",
-      "Sering merasa kehabisan energi",
-      "Aktivitas terasa sangat sulit dilakukan"
-    ]
-  },
-  {
-    question: "Seberapa mudah kamu menikmati hal yang disukai?",
-    description: "Contohnya musik, bermain, atau bertemu teman.",
-    options: [
-      "Masih bisa menikmatinya",
-      "Kadang terasa biasa saja",
-      "Belakangan ini lebih sulit",
-      "Aku hampir tidak menikmati apa pun"
-    ]
-  },
-  {
-    question: "Saat menghadapi masalah, bagaimana biasanya kamu merespons?",
-    description: "Pilih yang paling mendekati pengalamanmu.",
-    options: [
-      "Bisa memikirkan langkah berikutnya",
-      "Butuh waktu untuk menenangkan diri",
-      "Sering merasa kewalahan",
-      "Sulit mengetahui harus berbuat apa"
-    ]
-  },
-  {
-    question: "Seberapa didukung kamu oleh orang di sekitarmu?",
-    description: "Kamu boleh menjawab dengan jujur.",
-    options: [
-      "Aku punya seseorang yang bisa diajak bicara",
-      "Ada seseorang, tapi sulit untuk mulai bercerita",
-      "Aku belum yakin siapa yang bisa dipercaya",
-      "Aku merasa sendirian menghadapi ini"
-    ]
-  }
-];
-
-let quizIndex = 0;
-let quizAnswers = Array(quizQuestions.length).fill(null);
-
-const quizQuestion = $("#quiz-question");
-const quizOptions = $("#quiz-options");
-const quizNext = $("#quiz-next");
-const quizBack = $("#quiz-back");
-
-function renderQuiz() {
-  const question = quizQuestions[quizIndex];
-
-  $("#quiz-count").textContent =
-    `Pertanyaan ${quizIndex + 1} dari ${quizQuestions.length}`;
-
-  $("#quiz-progress").style.width =
-    `${((quizIndex + 1) / quizQuestions.length) * 100}%`;
-
-  quizQuestion.replaceChildren();
-  quizOptions.replaceChildren();
-
-  const title = document.createElement("h2");
-  title.textContent = question.question;
-
-  const description = document.createElement("p");
-  description.textContent = question.description;
-
-  quizQuestion.append(title, description);
-
-  question.options.forEach((option, index) => {
-    const button = document.createElement("button");
-    button.type = "button";
-    button.className = "quiz-option";
-
-    if (quizAnswers[quizIndex] === index) {
-      button.classList.add("selected");
-    }
-
-    const marker = document.createElement("span");
-    marker.className = "option-marker";
-    marker.textContent = quizAnswers[quizIndex] === index ? "✓" : "";
-
-    const text = document.createElement("span");
-    text.textContent = option;
-
-    button.append(marker, text);
-
-    button.addEventListener("click", () => {
-      quizAnswers[quizIndex] = index;
-      renderQuiz();
+          if (active) {
+            link.setAttribute("aria-current", "location");
+          } else {
+            link.removeAttribute("aria-current");
+          }
+        });
+      });
+    }, {
+      rootMargin: "-25% 0px -60% 0px"
     });
 
-    quizOptions.append(button);
-  });
-
-  quizBack.disabled = quizIndex === 0;
-  quizNext.disabled = quizAnswers[quizIndex] === null;
-  quizNext.textContent =
-    quizIndex === quizQuestions.length - 1
-      ? "Lihat refleksi ✦"
-      : "Selanjutnya →";
-}
-
-quizBack.addEventListener("click", () => {
-  if (quizIndex > 0) {
-    quizIndex--;
-    renderQuiz();
-  }
-});
-
-quizNext.addEventListener("click", () => {
-  if (quizAnswers[quizIndex] === null) return;
-
-  if (quizIndex < quizQuestions.length - 1) {
-    quizIndex++;
-    renderQuiz();
-    return;
-  }
-
-  showQuizResult();
-});
-
-function showQuizResult() {
-  const result = $("#quiz-result");
-  result.replaceChildren();
-
-  const answered = quizAnswers.filter((value) => value !== null).length;
-
-  const title = document.createElement("h3");
-  title.textContent = "Terima kasih sudah meluangkan waktu 💜";
-
-  const message = document.createElement("p");
-  message.textContent =
-    "Jawabanmu tidak menentukan diagnosis atau tingkat kesehatan mental. " +
-    "Gunakan refleksi ini untuk mengenali hal yang mungkin kamu butuhkan.";
-
-  const detail = document.createElement("p");
-  detail.className = "result-action";
-
-  const difficultAnswers = quizAnswers.filter(
-    (answer) => answer === 2 || answer === 3
-  ).length;
-
-  if (difficultAnswers >= 3) {
-    detail.textContent =
-      "Beberapa jawabanmu menunjukkan bahwa ada hal yang mungkin terasa berat. " +
-      "Pertimbangkan untuk bercerita kepada orang tepercaya atau tenaga profesional, " +
-      "terutama jika hal ini berlangsung lama atau mengganggu aktivitasmu.";
-  } else {
-    detail.textContent =
-      "Coba pikirkan satu kebutuhan kecil yang bisa kamu penuhi hari ini. " +
-      "Jika ternyata kamu sedang kesulitan, kamu tetap berhak mencari dukungan.";
-  }
-
-  const support = document.createElement("button");
-  support.type = "button";
-  support.className = "btn btn-primary result-action";
-  support.textContent = "Lihat pilihan dukungan →";
-  support.addEventListener("click", () => navigateTo("support"));
-
-  result.append(title, message, detail, support);
-  result.hidden = false;
-
-  quizQuestion.hidden = true;
-  quizOptions.hidden = true;
-  $(".quiz-actions").hidden = true;
-  $("#quiz-count").textContent = `${answered} jawaban selesai`;
-
-  showToast("Kamu sudah menyelesaikan refleksi ✦");
-}
-
-renderQuiz();
-
-// =========================================
-// 7. CALM CORNER — BREATHING TIMER
-// =========================================
-
-const breathCircle = $("#breath-circle");
-const breathPhase = $("#breath-phase");
-const breathTitle = $("#breath-title");
-const breathDescription = $("#breath-description");
-const breathTimer = $("#breath-timer");
-const breathStart = $("#breath-start");
-
-let breathInterval = null;
-let breathStartedAt = 0;
-let breathRemaining = 60;
-let breathRunning = false;
-let breathPhaseTimeout = null;
-
-function formatTime(seconds) {
-  const minutes = Math.floor(seconds / 60);
-  const remainingSeconds = seconds % 60;
-
-  return `${String(minutes).padStart(2, "0")}:${String(remainingSeconds).padStart(2, "0")}`;
-}
-
-function updateBreathTimer() {
-  breathTimer.textContent = formatTime(breathRemaining);
-}
-
-function setBreathPhase(phase, text, description) {
-  breathCircle.classList.remove("inhale", "hold", "exhale");
-
-  if (phase) breathCircle.classList.add(phase);
-
-  breathPhase.textContent = text;
-  breathTitle.textContent = text;
-  breathDescription.textContent = description;
-}
-
-function scheduleBreathPhase() {
-  clearTimeout(breathPhaseTimeout);
-
-  if (!breathRunning) return;
-
-  // Pola lembut: tarik 4 detik, jeda 2 detik,
-  // embuskan 4 detik. Tidak perlu menahan napas
-  // jika terasa tidak nyaman.
-  setBreathPhase(
-    "inhale",
-    "Tarik napas...",
-    "Tarik perlahan selama sekitar 4 detik, sesuai kenyamanan."
-  );
-
-  breathPhaseTimeout = setTimeout(() => {
-    if (!breathRunning) return;
-
-    setBreathPhase(
-      "hold",
-      "Jeda sejenak",
-      "Biarkan tubuhmu rileks. Kamu boleh melewati jeda ini."
-    );
-
-    breathPhaseTimeout = setTimeout(() => {
-      if (!breathRunning) return;
-
-      setBreathPhase(
-        "exhale",
-        "Emb uskan perlahan...".replace("Emb uskan", "Embuskan"),
-        "Emb uskan napas secara lembut, tanpa memaksakan diri.".replace("Emb uskan", "Embuskan")
-      );
-
-      breathPhaseTimeout = setTimeout(() => {
-        if (breathRunning) scheduleBreathPhase();
-      }, 4000);
-    }, 2000);
-  }, 4000);
-}
-
-function stopBreathing(finished = false) {
-  breathRunning = false;
-  clearInterval(breathInterval);
-  clearTimeout(breathPhaseTimeout);
-
-  breathInterval = null;
-  breathPhaseTimeout = null;
-
-  breathCircle.classList.remove("inhale", "hold", "exhale");
-  breathStart.textContent = "Start again ✦";
-
-  if (finished) {
-    setBreathPhase(
-      "",
-      "You did it. 💜",
-      "Sesi selesai. Perhatikan bagaimana tubuhmu terasa sekarang."
-    );
-    showToast("Kamu sudah mengambil jeda untuk diri sendiri.");
-  } else {
-    setBreathPhase(
-      "",
-      "Let's take it slow.",
-      "Cari posisi yang nyaman. Kamu boleh berhenti kapan saja."
-    );
+    sections.forEach(section => observer.observe(section));
   }
 }
 
-breathStart.addEventListener("click", () => {
-  if (breathRunning) {
-    stopBreathing();
-    return;
-  }
+/* =========================================================
+   3. MOOD CHECK-IN
+   ========================================================= */
 
-  breathRunning = true;
-  breathRemaining = 60;
-  breathStartedAt = Date.now();
-
-  breathStart.textContent = "Pause session";
-  updateBreathTimer();
-  scheduleBreathPhase();
-
-  breathInterval = setInterval(() => {
-    // Berdasarkan waktu nyata agar timer tidak meleset
-    // terlalu jauh ketika browser menunda interval.
-    const elapsed = Math.floor((Date.now() - breathStartedAt) / 1000);
-    breathRemaining = Math.max(0, 60 - elapsed);
-    updateBreathTimer();
-
-    if (breathRemaining <= 0) {
-      stopBreathing(true);
-    }
-  }, 250);
-});
-
-$("#breath-reset").addEventListener("click", () => {
-  stopBreathing();
-  breathRemaining = 60;
-  updateBreathTimer();
-  breathStart.textContent = "Start breathing ✦";
-  showToast("Timer diatur ulang.");
-});
-
-updateBreathTimer();
-
-// =========================================
-// 8. TINY RESET ACTIVITIES
-// =========================================
-
-const resetContent = {
-  grounding: {
-    title: "Come back to the present 🌱",
-    intro: "Pelan-pelan, perhatikan lingkunganmu. Tidak perlu terburu-buru.",
-    steps: [
-      "Sebutkan 5 hal yang bisa kamu lihat.",
-      "Sebutkan 4 hal yang bisa kamu rasakan melalui sentuhan.",
-      "Sebutkan 3 hal yang bisa kamu dengar.",
-      "Sebutkan 2 hal yang bisa kamu cium.",
-      "Sebutkan 1 hal yang bisa kamu rasakan atau syukuri saat ini."
-    ]
+const MOOD_INFO = {
+  happy: {
+    label: "Bahagia",
+    emoji: "😊",
+    message: "Senang rasanya kalau ada hal yang membuatmu bahagia."
   },
-  gratitude: {
-    title: "A little thing that matters 🌷",
-    intro: "Tidak perlu mencari sesuatu yang besar. Hal kecil juga berarti.",
-    steps: [
-      "Apa satu hal kecil yang membuat harimu sedikit lebih baik?",
-      "Siapa orang yang pernah membuatmu merasa dihargai?",
-      "Apa satu hal yang ingin kamu apresiasi dari dirimu sendiri?"
-    ]
+  calm: {
+    label: "Tenang",
+    emoji: "😌",
+    message: "Nikmati momen tenang ini tanpa perlu terburu-buru."
   },
-  kindness: {
-    title: "Talk to yourself like a friend 🫶",
-    intro: "Bayangkan temanmu mengalami hal yang sama. Apa yang akan kamu katakan kepadanya?",
-    steps: [
-      "Kamu tidak harus sempurna untuk layak dihargai.",
-      "Beristirahat bukan berarti kamu gagal.",
-      "Kamu boleh meminta bantuan dan mengambil waktu untuk dirimu sendiri."
-    ]
+  okay: {
+    label: "Biasa saja",
+    emoji: "🙂",
+    message: "Tidak harus selalu merasa luar biasa. Biasa saja juga tidak apa-apa."
+  },
+  sad: {
+    label: "Sedih",
+    emoji: "😔",
+    message: "Kamu boleh memberi ruang untuk perasaanmu hari ini."
+  },
+  anxious: {
+    label: "Cemas",
+    emoji: "😰",
+    message: "Coba hadapi semuanya satu langkah kecil pada satu waktu."
+  },
+  angry: {
+    label: "Kesal",
+    emoji: "😤",
+    message: "Ambil jeda sebelum merespons. Perasaanmu layak dipahami."
+  },
+  tired: {
+    label: "Lelah",
+    emoji: "😴",
+    message: "Istirahat juga bagian dari proses untuk terus bertumbuh."
   }
 };
 
-$$("[data-reset]").forEach((button) => {
-  button.addEventListener("click", () => {
-    const content = resetContent[button.dataset.reset];
-    const result = $("#reset-result");
+function initMoodCheckIn() {
+  const form = $("#mood-form") || $(".mood-form");
+  const intensity = $("#mood-intensity");
+  const result = $("#mood-result");
+  const intensityValue = $("#mood-intensity-value");
 
-    result.replaceChildren();
-
-    const title = document.createElement("h3");
-    title.textContent = content.title;
-
-    const intro = document.createElement("p");
-    intro.textContent = content.intro;
-
-    const list = document.createElement("div");
-    list.className = "grounding-list";
-
-    content.steps.forEach((step, index) => {
-      const row = document.createElement("label");
-      const checkbox = document.createElement("input");
-      checkbox.type = "checkbox";
-
-      const text = document.createElement("span");
-      text.textContent = step;
-
-      row.append(checkbox, text);
-      list.append(row);
+  if (intensity && intensityValue) {
+    intensity.addEventListener("input", () => {
+      intensityValue.textContent = intensity.value;
     });
-
-    result.append(title, intro, list);
-    result.hidden = false;
-
-    result.scrollIntoView({ behavior: "smooth", block: "nearest" });
-  });
-});
-
-// =========================================
-// 9. MY JOURNAL
-// =========================================
-
-const journalForm = $("#journal-form");
-const journalContent = $("#journal-content");
-const journalCounter = $("#journal-counter");
-
-journalContent.addEventListener("input", () => {
-  journalCounter.textContent = `${journalContent.value.length} / 5000`;
-});
-
-journalForm.addEventListener("submit", (event) => {
-  event.preventDefault();
-
-  const title = $("#journal-title").value.trim();
-  const content = journalContent.value.trim();
-  const mood = $("#journal-mood").value;
-
-  if (!title || !content) {
-    showToast("Isi judul dan catatanmu terlebih dahulu.");
-    return;
   }
 
-  const entries = loadData("moodora-journal");
+  if (!form) return;
 
-  entries.unshift({
-    id: Date.now(),
-    title,
-    mood,
-    content,
-    date: new Date().toISOString()
+  form.addEventListener("submit", event => {
+    event.preventDefault();
+
+    const selectedMood = $(
+      'input[name="mood"]:checked, input[name="mood-choice"]:checked, ' +
+      'input[name="feeling"]:checked',
+      form
+    );
+
+    const moodValue =
+      selectedMood?.value ||
+      form.querySelector("[data-mood].selected")?.dataset.mood ||
+      form.querySelector("[data-mood].is-selected")?.dataset.mood;
+
+    if (!moodValue) {
+      showToast("Pilih suasana hati yang paling menggambarkan dirimu.");
+      return;
+    }
+
+    const mood = MOOD_INFO[moodValue] || {
+      label: moodValue,
+      emoji: "💭",
+      message: "Terima kasih sudah meluangkan waktu untuk memahami dirimu."
+    };
+
+    const factors = $$(
+      'input[name="factor"]:checked, input[name="mood-factor"]:checked, ' +
+      'input[name="trigger"]:checked',
+      form
+    ).map(input => input.value);
+
+    const entry = {
+      id: Date.now(),
+      date: todayString(),
+      mood: moodValue,
+      label: mood.label,
+      intensity: Number(intensity?.value || 3),
+      factors,
+      createdAt: new Date().toISOString()
+    };
+
+    const moods = readStorage(STORAGE_KEYS.moods, []);
+    moods.unshift(entry);
+
+    if (!saveStorage(STORAGE_KEYS.moods, moods)) return;
+
+    if (result) {
+      result.textContent = `${mood.emoji} ${mood.message}`;
+      result.hidden = false;
+    }
+
+    renderMoodHistory();
+    renderMoodInsights();
+    showToast("Check-in berhasil disimpan. Terima kasih sudah jujur pada diri sendiri.");
+
+    form.reset();
+
+    if (intensity) intensity.value = "3";
+    if (intensityValue) intensityValue.textContent = "3";
   });
 
-  if (!saveData("moodora-journal", entries.slice(0, 100))) return;
-
-  journalForm.reset();
-  journalCounter.textContent = "0 / 5000";
-
-  renderJournal();
-  showToast("Catatanmu tersimpan di browser ✦");
-});
-
-function renderJournal() {
-  const container = $("#journal-list");
-  const entries = loadData("moodora-journal");
-
-  container.replaceChildren();
-
-  if (!entries.length) {
-    const empty = document.createElement("p");
-    empty.className = "empty-state";
-    empty.textContent = "Belum ada catatan. Kamu bisa mulai kapan saja.";
-    container.append(empty);
-    return;
-  }
-
-  entries.forEach((entry) => {
-    const card = document.createElement("article");
-    card.className = "journal-entry";
-
-    const mood = document.createElement("span");
-    mood.className = "entry-mood";
-    mood.textContent = entry.mood.split(" ")[0];
-
-    const title = document.createElement("h3");
-    title.textContent = entry.title;
-
-    const date = document.createElement("time");
-    date.textContent = new Date(entry.date).toLocaleString("id-ID", {
-      dateStyle: "medium",
-      timeStyle: "short"
-    });
-
-    const content = document.createElement("p");
-    content.className = "entry-content";
-    content.textContent = entry.content;
-
-    const remove = document.createElement("button");
-    remove.type = "button";
-    remove.className = "entry-delete";
-    remove.textContent = "Hapus catatan";
-
-    remove.addEventListener("click", () => {
-      const confirmed = window.confirm(
-        "Hapus catatan ini secara permanen dari browser?"
+  // Memilih mood melalui kartu atau tombol data-mood.
+  $$("[data-mood]").forEach(button => {
+    button.addEventListener("click", () => {
+      const moodValue = button.dataset.mood;
+      const radio = $(
+        `input[name="mood"][value="${CSS.escape(moodValue)}"], ` +
+        `input[name="mood-choice"][value="${CSS.escape(moodValue)}"], ` +
+        `input[name="feeling"][value="${CSS.escape(moodValue)}"]`,
+        form || document
       );
 
-      if (!confirmed) return;
+      if (radio) {
+        radio.checked = true;
+        radio.dispatchEvent(new Event("change", { bubbles: true }));
+      }
 
-      const updated = loadData("moodora-journal")
-        .filter((item) => item.id !== entry.id);
+      $$("[data-mood]").forEach(item => {
+        item.classList.remove("selected", "is-selected");
+        item.setAttribute("aria-pressed", "false");
+      });
 
-      if (!saveData("moodora-journal", updated)) return;
-
-      renderJournal();
-      showToast("Catatan telah dihapus dari browser.");
+      button.classList.add("selected");
+      button.setAttribute("aria-pressed", "true");
     });
-
-    card.append(mood, title, date, content, remove);
-    container.append(card);
   });
+
+  renderMoodHistory();
+  renderMoodInsights();
 }
 
-renderJournal();
+function renderMoodHistory() {
+  const container = $("#mood-history");
+  if (!container) return;
 
-// =========================================
-// 10. SMALL STEPS CHECKLIST
-// =========================================
+  const moods = readStorage(STORAGE_KEYS.moods, []).slice(0, 7);
 
-const dailySteps = [
+  if (!moods.length) {
+    container.textContent = "Catatan suasana hatimu akan muncul di sini.";
+    return;
+  }
+
+  container.innerHTML = moods.map(entry => {
+    const mood = MOOD_INFO[entry.mood] || {
+      emoji: "💭",
+      label: entry.label || entry.mood
+    };
+
+    return `
+      <article class="mood-history-item">
+        <span aria-hidden="true">${mood.emoji}</span>
+        <div>
+          <strong>${escapeHTML(mood.label)}</strong>
+          <p>${escapeHTML(formatDate(entry.date))}</p>
+          <small>Intensitas: ${Number(entry.intensity)}/5</small>
+        </div>
+      </article>
+    `;
+  }).join("");
+}
+
+function renderMoodInsights() {
+  const container = $("#mood-insights");
+  if (!container) return;
+
+  const moods = readStorage(STORAGE_KEYS.moods, []).slice(0, 7);
+
+  if (!moods.length) {
+    container.textContent =
+      "Lakukan beberapa check-in untuk mulai melihat pola suasana hatimu.";
+    return;
+  }
+
+  const counts = {};
+
+  moods.forEach(entry => {
+    counts[entry.mood] = (counts[entry.mood] || 0) + 1;
+  });
+
+  const topMood = Object.keys(counts).sort(
+    (a, b) => counts[b] - counts[a]
+  )[0];
+
+  const info = MOOD_INFO[topMood];
+
+  container.textContent = info
+    ? `Dalam ${moods.length} check-in terakhir, suasana hati yang paling sering kamu catat adalah ${info.label.toLowerCase()}. Ini bukan penilaian baik atau buruk—hanya kesempatan untuk mengenali pola dirimu.`
+    : "Terus catat perasaanmu untuk mengenali polanya.";
+}
+
+/* =========================================================
+   4. KUESIONER REFLEKSI DIRI
+   ========================================================= */
+
+const QUESTIONS = [
   {
-    id: "water",
-    emoji: "💧",
-    title: "Minum air yang cukup",
-    description: "Mulai dengan segelas air."
+    text: "Dalam dua minggu terakhir, seberapa sering kamu kehilangan minat pada hal yang biasanya kamu sukai?",
+    theme: "interest"
   },
   {
-    id: "rest",
-    emoji: "🌙",
-    title: "Ambil jeda dari layar",
-    description: "Sisihkan beberapa menit untuk beristirahat."
+    text: "Seberapa sering kamu merasa sedih, kosong, atau kehilangan harapan?",
+    theme: "sadness"
   },
   {
-    id: "move",
-    emoji: "🌿",
-    title: "Gerakkan tubuh sebentar",
-    description: "Peregangan ringan jika kamu nyaman."
+    text: "Seberapa sering kamu merasa cemas, khawatir berlebihan, atau sulit menghentikan pikiranmu?",
+    theme: "anxiety"
   },
   {
-    id: "connect",
-    emoji: "🫂",
-    title: "Terhubung dengan seseorang",
-    description: "Sapa teman atau orang yang kamu percaya."
+    text: "Seberapa sering kamu mengalami kesulitan tidur atau merasa lelah meskipun sudah beristirahat?",
+    theme: "sleep"
   },
   {
-    id: "kind",
-    emoji: "💜",
-    title: "Berikan apresiasi kepada diri sendiri",
-    description: "Ingat satu hal kecil yang sudah kamu usahakan."
+    text: "Seberapa sering perasaanmu membuat kegiatan sekolah atau hubungan dengan orang lain terasa sulit?",
+    theme: "daily"
+  },
+  {
+    text: "Seberapa sering kamu kesulitan berkonsentrasi saat belajar atau mengerjakan sesuatu?",
+    theme: "focus"
+  },
+  {
+    text: "Seberapa sering kamu merasa kewalahan oleh tugas, ekspektasi orang lain, atau masalah sehari-hari?",
+    theme: "stress"
+  },
+  {
+    text: "Seberapa sering kamu merasa kesepian atau merasa tidak punya seseorang untuk diajak bercerita?",
+    theme: "loneliness"
+  },
+  {
+    text: "Seberapa sering kamu merasa tidak cukup baik atau menyalahkan dirimu sendiri?",
+    theme: "self-worth"
+  },
+  {
+    text: "Seberapa sering kamu merasa tidak aman dengan dirimu sendiri atau terpikir untuk menyakiti dirimu?",
+    theme: "safety",
+    safetyQuestion: true
   }
 ];
 
-function todayKey() {
-  const date = new Date();
-  const year = date.getFullYear();
-  const month = String(date.getMonth() + 1).padStart(2, "0");
-  const day = String(date.getDate()).padStart(2, "0");
+const FREQUENCY_OPTIONS = [
+  { label: "Nggak pernah", value: 0 },
+  { label: "Beberapa hari", value: 1 },
+  { label: "Lebih dari separuh hari", value: 2 },
+  { label: "Hampir setiap hari", value: 3 }
+];
 
-  return `moodora-steps-${year}-${month}-${day}`;
+const questionnaireState = {
+  index: 0,
+  answers: Array(QUESTIONS.length).fill(null),
+  started: false
+};
+
+function initQuestionnaire() {
+  const startButton = $("#start-questionnaire");
+  const form = $("#questionnaire-form");
+
+  if (!form) return;
+
+  form.addEventListener("submit", event => event.preventDefault());
+
+  startButton?.addEventListener("click", () => {
+    questionnaireState.index = 0;
+    questionnaireState.answers = Array(QUESTIONS.length).fill(null);
+    questionnaireState.started = true;
+
+    const result = $("#reflection-result");
+    if (result) result.hidden = true;
+
+    form.hidden = false;
+    startButton.hidden = true;
+
+    renderQuestion();
+    scrollToElement(form);
+  });
+
+  $("#question-back")?.addEventListener("click", () => {
+    if (questionnaireState.index > 0) {
+      questionnaireState.index--;
+      renderQuestion();
+    }
+  });
+
+  $("#question-next")?.addEventListener("click", () => {
+    if (!saveCurrentAnswer()) return;
+
+    if (questionnaireState.index < QUESTIONS.length - 1) {
+      questionnaireState.index++;
+      renderQuestion();
+    }
+  });
+
+  $("#question-submit")?.addEventListener("click", () => {
+    if (!saveCurrentAnswer()) return;
+    showQuestionnaireResult();
+  });
+
+  $("#restart-questionnaire")?.addEventListener("click", () => {
+    questionnaireState.index = 0;
+    questionnaireState.answers = Array(QUESTIONS.length).fill(null);
+    questionnaireState.started = true;
+
+    const result = $("#reflection-result");
+    if (result) result.hidden = true;
+
+    form.hidden = false;
+    renderQuestion();
+    scrollToElement(form);
+  });
 }
 
-function renderSteps() {
-  const container = $("#steps-list");
-  const saved = loadData(todayKey(), []);
-  container.replaceChildren();
+function renderQuestion() {
+  const question = QUESTIONS[questionnaireState.index];
+  const container = $("#question-container");
+  const counter = $("#question-counter");
+  const percentage = $("#question-percentage");
+  const progress = $("#question-progress");
+  const progressFill = $("#question-progress-fill");
+  const backButton = $("#question-back");
+  const nextButton = $("#question-next");
+  const submitButton = $("#question-submit");
+  const error = $("#question-error");
 
-  dailySteps.forEach((step) => {
-    const checked = saved.includes(step.id);
+  if (!question || !container) return;
 
-    const label = document.createElement("label");
-    label.className = `step-item${checked ? " completed" : ""}`;
+  const current = questionnaireState.index + 1;
+  const percent = Math.round((current / QUESTIONS.length) * 100);
 
-    const checkbox = document.createElement("input");
-    checkbox.type = "checkbox";
-    checkbox.checked = checked;
+  if (counter) counter.textContent = `Pertanyaan ${current} dari ${QUESTIONS.length}`;
+  if (percentage) percentage.textContent = `${percent}%`;
 
-    const emoji = document.createElement("span");
-    emoji.className = "step-emoji";
-    emoji.textContent = step.emoji;
+  if (progress) progress.setAttribute("aria-valuenow", String(percent));
+  if (progressFill) progressFill.style.width = `${percent}%`;
 
-    const copy = document.createElement("div");
+  container.innerHTML = `
+    <fieldset class="question-card">
+      <legend>${escapeHTML(question.text)}</legend>
+      <p class="question-hint">Pilih jawaban yang paling sesuai dengan pengalamanmu.</p>
 
-    const title = document.createElement("b");
-    title.textContent = step.title;
+      <div class="answer-options">
+        ${FREQUENCY_OPTIONS.map((option, index) => `
+          <label class="answer-option">
+            <input
+              type="radio"
+              name="question-${questionnaireState.index}"
+              value="${option.value}"
+              ${questionnaireState.answers[questionnaireState.index] === option.value ? "checked" : ""}
+              required
+            >
+            <span>${escapeHTML(option.label)}</span>
+          </label>
+        `).join("")}
+      </div>
+    </fieldset>
+  `;
 
-    const description = document.createElement("small");
-    description.textContent = step.description;
+  if (backButton) {
+    backButton.hidden = questionnaireState.index === 0;
+    backButton.disabled = questionnaireState.index === 0;
+  }
 
-    copy.append(title, description);
-    label.append(checkbox, emoji, copy);
-    container.append(label);
+  const isLast = questionnaireState.index === QUESTIONS.length - 1;
 
-    checkbox.addEventListener("change", () => {
-      let progress = loadData(todayKey(), []);
+  if (nextButton) nextButton.hidden = isLast;
+  if (submitButton) submitButton.hidden = !isLast;
+  if (error) error.textContent = "";
 
-      if (checkbox.checked) {
-        if (!progress.includes(step.id)) progress.push(step.id);
-      } else {
-        progress = progress.filter((id) => id !== step.id);
+  const selectedInput = $('input[type="radio"]:checked', container);
+  selectedInput?.focus({ preventScroll: true });
+}
+
+function saveCurrentAnswer() {
+  const selected = $(
+    `input[name="question-${questionnaireState.index}"]:checked`
+  );
+
+  const error = $("#question-error");
+
+  if (!selected) {
+    if (error) {
+      error.textContent = "Pilih salah satu jawaban sebelum melanjutkan.";
+    } else {
+      showToast("Pilih salah satu jawaban terlebih dahulu.");
+    }
+    return false;
+  }
+
+  questionnaireState.answers[questionnaireState.index] =
+    Number(selected.value);
+
+  if (error) error.textContent = "";
+  return true;
+}
+
+function showQuestionnaireResult() {
+  const answers = questionnaireState.answers;
+
+  // Pertanyaan keselamatan tidak dimasukkan ke skor.
+  const score = answers.slice(0, 9).reduce(
+    (total, answer) => total + (answer ?? 0),
+    0
+  );
+
+  const safetyAnswer = answers[9] ?? 0;
+  let title;
+  let description;
+
+  if (score <= 8) {
+    title = "Perasaan relatif stabil";
+    description =
+      "Dari jawabanmu, mungkin kamu sedang memiliki ruang untuk menjalani keseharian. Tetap beri perhatian pada kebutuhan diri dan ingat bahwa kamu boleh meminta dukungan kapan pun.";
+  } else if (score <= 17) {
+    title = "Ada hal yang sedang membebani";
+    description =
+      "Jawabanmu menunjukkan ada beberapa hal yang mungkin terasa berat belakangan ini. Kamu tidak harus menyelesaikan semuanya sekaligus. Mulailah dari satu langkah kecil.";
+  } else {
+    title = "Kamu mungkin membutuhkan dukungan lebih";
+    description =
+      "Sepertinya akhir-akhir ini ada cukup banyak hal yang menguras energimu. Kamu tidak perlu menghadapi semuanya sendirian. Bercerita kepada orang yang kamu percaya atau tenaga profesional bisa menjadi langkah yang berarti.";
+  }
+
+  const advice = buildAdvice(answers);
+
+  const result = $("#reflection-result");
+  const titleElement = $("#reflection-result-title");
+  const descriptionElement = $("#reflection-result-description");
+  const adviceList = $("#reflection-advice-list");
+  const form = $("#questionnaire-form");
+
+  if (titleElement) titleElement.textContent = title;
+  if (descriptionElement) descriptionElement.textContent = description;
+
+  if (adviceList) {
+    adviceList.innerHTML = advice.map(item => `
+      <li>
+        <strong>${escapeHTML(item.title)}</strong>
+        <p>${escapeHTML(item.description)}</p>
+      </li>
+    `).join("");
+  }
+
+  if (form) form.hidden = true;
+  if (result) {
+    result.hidden = false;
+    scrollToElement(result);
+  }
+
+  // Simpan jawaban refleksi secara lokal.
+  saveStorage(STORAGE_KEYS.questionnaire, {
+    date: todayString(),
+    answers,
+    score,
+    resultTitle: title
+  });
+
+  // Tampilkan informasi keselamatan secara terpisah dari skor.
+  showSafetyMessage(safetyAnswer);
+
+  showToast("Refleksi selesai. Terima kasih sudah meluangkan waktu untuk dirimu.");
+}
+
+function buildAdvice(answers) {
+  const advice = [];
+  const themes = QUESTIONS.slice(0, 9).map((question, index) => ({
+    theme: question.theme,
+    score: answers[index] ?? 0
+  }));
+
+  const recommendations = {
+    interest: {
+      title: "Mulai dari hal kecil yang kamu sukai",
+      description: "Luangkan beberapa menit untuk aktivitas sederhana yang dulu terasa menyenangkan, tanpa menuntut dirimu harus langsung merasa lebih baik."
+    },
+    sadness: {
+      title: "Beri ruang untuk perasaanmu",
+      description: "Coba tuliskan apa yang sedang kamu rasakan. Kamu tidak perlu memaksa diri untuk selalu terlihat baik-baik saja."
+    },
+    anxiety: {
+      title: "Coba latihan pernapasan",
+      description: "Kunjungi Calm Corner dan ikuti latihan pernapasan pelan. Berhenti jika kamu merasa pusing atau tidak nyaman."
+    },
+    sleep: {
+      title: "Perhatikan kebutuhan istirahat",
+      description: "Coba buat rutinitas tidur yang lebih teratur dan beri jeda dari layar sebelum tidur."
+    },
+    daily: {
+      title: "Pecah aktivitas menjadi langkah kecil",
+      description: "Pilih satu tugas yang paling penting, kerjakan sedikit demi sedikit, dan pertimbangkan berbicara dengan orang yang bisa membantu."
+    },
+    focus: {
+      title: "Coba fokus dalam waktu singkat",
+      description: "Kerjakan satu hal selama 10 menit, lalu istirahat sebentar. Kurangi gangguan yang bisa kamu kendalikan."
+    },
+    stress: {
+      title: "Kurangi beban satu per satu",
+      description: "Tulis hal yang membebanimu, pilih satu yang bisa ditangani hari ini, dan izinkan dirimu meminta bantuan."
+    },
+    loneliness: {
+      title: "Hubungi seseorang yang kamu percaya",
+      description: "Kirim pesan sederhana kepada teman, keluarga, guru BK, atau orang dewasa yang membuatmu merasa aman."
+    },
+    "self-worth": {
+      title: "Berbicara kepada diri dengan lebih lembut",
+      description: "Bayangkan apa yang akan kamu katakan kepada teman dalam situasi yang sama, lalu coba gunakan kata-kata itu untuk dirimu."
+    }
+  };
+
+  themes
+    .filter(item => item.score >= 2)
+    .sort((a, b) => b.score - a.score)
+    .slice(0, 3)
+    .forEach(item => {
+      if (recommendations[item.theme]) advice.push(recommendations[item.theme]);
+    });
+
+  if (!advice.length) {
+    advice.push({
+      title: "Terus jaga dirimu",
+      description: "Pertahankan kebiasaan yang membantumu merasa lebih baik, luangkan waktu untuk beristirahat, dan tetap terbuka untuk bercerita ketika membutuhkan dukungan."
+    });
+  }
+
+  return advice;
+}
+
+function showSafetyMessage(safetyAnswer) {
+  const existing = $("#safety-support-message");
+  if (existing) existing.remove();
+
+  if (safetyAnswer === 0) return;
+
+  const message = document.createElement("section");
+  message.id = "safety-support-message";
+  message.className = "safety-support-message";
+  message.setAttribute("role", "alert");
+
+  message.innerHTML = `
+    <h3>Kamu layak merasa aman dan didukung</h3>
+    <p>
+      Terima kasih sudah menjawab dengan jujur. Jika kamu merasa tidak aman
+      atau terpikir untuk menyakiti diri, cobalah segera menghubungi orang
+      dewasa yang kamu percaya, keluarga, guru BK, atau tenaga kesehatan.
+      Kamu tidak harus menghadapi ini sendirian.
+    </p>
+    <p>
+      Jika kamu merasa mungkin akan menyakiti diri dalam waktu dekat,
+      jangan sendirian. Dekati orang yang aman dan hubungi layanan darurat
+      setempat atau pergi ke IGD terdekat.
+    </p>
+    <p>
+      Kamu tidak perlu menjelaskan semuanya sekaligus. Kamu bisa mulai
+      dengan mengatakan, "Aku sedang tidak merasa aman dan butuh ditemani."
+    </p>
+  `;
+
+  const result = $("#reflection-result");
+  if (result) result.appendChild(message);
+}
+
+/* =========================================================
+   5. CALM CORNER — LATIHAN PERNAPASAN
+   ========================================================= */
+
+let breathingInterval = null;
+let breathingPhaseTimeout = null;
+let breathingRunning = false;
+
+function initBreathing() {
+  const startButton = $("#breathing-start");
+  const stopButton = $("#breathing-stop");
+  const visual = $("#breathing-visual");
+  const instruction = $("#breathing-instruction");
+  const countdown = $("#breathing-countdown");
+
+  if (!startButton || !visual) return;
+
+  const phases = [
+    { label: "Tarik napas perlahan", seconds: 4, className: "inhale" },
+    { label: "Tahan sebentar", seconds: 2, className: "hold" },
+    { label: "Hembuskan perlahan", seconds: 6, className: "exhale" }
+  ];
+
+  let phaseIndex = 0;
+  let secondsLeft = phases[0].seconds;
+
+  function updateDisplay() {
+    const phase = phases[phaseIndex];
+
+    if (instruction) instruction.textContent = phase.label;
+    if (countdown) countdown.textContent = String(secondsLeft);
+
+    visual.classList.remove("inhale", "hold", "exhale", "is-running");
+    visual.classList.add(phase.className, "is-running");
+  }
+
+  function tick() {
+    if (!breathingRunning) return;
+
+    secondsLeft--;
+
+    if (secondsLeft <= 0) {
+      phaseIndex = (phaseIndex + 1) % phases.length;
+      secondsLeft = phases[phaseIndex].seconds;
+    }
+
+    updateDisplay();
+  }
+
+  function stop() {
+    breathingRunning = false;
+    window.clearInterval(breathingInterval);
+    window.clearTimeout(breathingPhaseTimeout);
+    breathingInterval = null;
+    breathingPhaseTimeout = null;
+
+    visual.classList.remove("inhale", "hold", "exhale", "is-running");
+
+    if (instruction) instruction.textContent = "Tarik napas saat siap, lalu hembuskan perlahan.";
+    if (countdown) countdown.textContent = "—";
+
+    startButton.disabled = false;
+    if (stopButton) stopButton.disabled = true;
+  }
+
+  startButton.addEventListener("click", () => {
+    if (breathingRunning) return;
+
+    breathingRunning = true;
+    phaseIndex = 0;
+    secondsLeft = phases[0].seconds;
+
+    startButton.disabled = true;
+    if (stopButton) stopButton.disabled = false;
+
+    updateDisplay();
+    breathingInterval = window.setInterval(tick, 1000);
+  });
+
+  stopButton?.addEventListener("click", stop);
+  if (stopButton) stopButton.disabled = true;
+
+  // Hindari interval yang berjalan terus jika pengguna meninggalkan halaman.
+  document.addEventListener("visibilitychange", () => {
+    if (document.hidden && breathingRunning) stop();
+  });
+}
+
+/* =========================================================
+   6. DAILY JOURNAL
+   ========================================================= */
+
+function initJournal() {
+  const form = $("#journal-form");
+  const entryInput = $("#journal-entry");
+  const editIdInput = $("#journal-edit-id");
+
+  if (form && entryInput) {
+    form.addEventListener("submit", event => {
+      event.preventDefault();
+
+      const content = entryInput.value.trim();
+
+      if (!content) {
+        showToast("Tulis sedikit tentang harimu sebelum menyimpan.");
+        entryInput.focus();
+        return;
       }
 
-      if (!saveData(todayKey(), progress)) return;
+      const journals = readStorage(STORAGE_KEYS.journals, []);
+      const editId = editIdInput?.value;
 
-      label.classList.toggle("completed", checkbox.checked);
-      updateStepsProgress();
+      if (editId) {
+        const index = journals.findIndex(item => String(item.id) === editId);
+
+        if (index !== -1) {
+          journals[index].content = content;
+          journals[index].updatedAt = new Date().toISOString();
+        }
+      } else {
+        journals.unshift({
+          id: Date.now(),
+          date: todayString(),
+          content,
+          createdAt: new Date().toISOString()
+        });
+      }
+
+      if (!saveStorage(STORAGE_KEYS.journals, journals)) return;
+
+      form.reset();
+      if (editIdInput) editIdInput.value = "";
+
+      const submitButton = $('button[type="submit"]', form);
+      if (submitButton) submitButton.textContent = "Simpan catatan";
+
+      renderJournals();
+      showToast(editId ? "Catatan berhasil diperbarui." : "Catatan berhasil disimpan.");
+    });
+  }
+
+  renderJournals();
+}
+
+function renderJournals() {
+  const container = $("#journal-list");
+  if (!container) return;
+
+  const journals = readStorage(STORAGE_KEYS.journals, []);
+
+  if (!journals.length) {
+    container.textContent =
+      "Belum ada catatan. Mulailah dengan menuliskan satu hal yang kamu rasakan hari ini.";
+    return;
+  }
+
+  container.innerHTML = journals.map(journal => `
+    <article class="journal-entry" data-journal-id="${escapeHTML(journal.id)}">
+      <p class="journal-date">${escapeHTML(formatDate(journal.date))}</p>
+      <p class="journal-content">${escapeHTML(journal.content).replace(/\n/g, "<br>")}</p>
+      <div class="journal-actions">
+        <button type="button" data-edit-journal="${escapeHTML(journal.id)}">
+          Edit
+        </button>
+        <button type="button" data-delete-journal="${escapeHTML(journal.id)}">
+          Hapus
+        </button>
+      </div>
+    </article>
+  `).join("");
+
+  $$("[data-edit-journal]", container).forEach(button => {
+    button.addEventListener("click", () => {
+      const journal = readStorage(STORAGE_KEYS.journals, []).find(
+        item => String(item.id) === button.dataset.editJournal
+      );
+
+      if (!journal) return;
+
+      const form = $("#journal-form");
+      const input = $("#journal-entry");
+      const editId = $("#journal-edit-id");
+
+      if (!form || !input) return;
+
+      input.value = journal.content;
+      if (editId) editId.value = String(journal.id);
+
+      const submitButton = $('button[type="submit"]', form);
+      if (submitButton) submitButton.textContent = "Perbarui catatan";
+
+      scrollToElement(form);
+      input.focus({ preventScroll: true });
     });
   });
 
-  updateStepsProgress();
+  $$("[data-delete-journal]", container).forEach(button => {
+    button.addEventListener("click", () => {
+      const confirmed = window.confirm("Hapus catatan jurnal ini?");
+      if (!confirmed) return;
+
+      const remaining = readStorage(STORAGE_KEYS.journals, []).filter(
+        item => String(item.id) !== button.dataset.deleteJournal
+      );
+
+      if (saveStorage(STORAGE_KEYS.journals, remaining)) {
+        renderJournals();
+        showToast("Catatan telah dihapus dari perangkat ini.");
+      }
+    });
+  });
 }
 
-function updateStepsProgress() {
-  const saved = loadData(todayKey(), []);
-  const count = saved.length;
-  const percentage = Math.round((count / dailySteps.length) * 100);
+/* =========================================================
+   7. SMALL STEPS — KEBIASAAN KECIL
+   ========================================================= */
 
-  $("#steps-progress-text").textContent =
-    `${count} of ${dailySteps.length} completed`;
+const DEFAULT_HABITS = [
+  { id: "water", text: "Minum air putih", done: false },
+  { id: "break", text: "Istirahat sebentar dari layar", done: false },
+  { id: "outside", text: "Mencari udara segar", done: false },
+  { id: "talk", text: "Menghubungi seseorang yang dipercaya", done: false },
+  { id: "journal", text: "Menulis satu hal yang dirasakan", done: false }
+];
 
-  $("#steps-percent").textContent = `${percentage}%`;
+function initSmallSteps() {
+  const container = $("#habit-list");
+  const resetButton = $("#reset-habits");
 
-  const circle = $("#steps-circle");
-  circle.style.background =
-    `conic-gradient(from 0deg, rgba(180,154,255,${percentage / 100}) ${percentage}%, transparent ${percentage}%)`;
+  if (!container) return;
 
-  circle.classList.remove("updated");
-  void circle.offsetWidth;
-  circle.classList.add("updated");
+  const stored = readStorage(STORAGE_KEYS.habits, null);
 
-  if (count === dailySteps.length) {
-    showToast("Semua langkah kecil hari ini selesai! ✨");
+  if (!stored || stored.date !== todayString()) {
+    saveStorage(STORAGE_KEYS.habits, {
+      date: todayString(),
+      items: DEFAULT_HABITS.map(item => ({ ...item }))
+    });
   }
+
+  renderHabits();
+
+  resetButton?.addEventListener("click", () => {
+    saveStorage(STORAGE_KEYS.habits, {
+      date: todayString(),
+      items: DEFAULT_HABITS.map(item => ({ ...item }))
+    });
+
+    renderHabits();
+    showToast("Daftar Small Steps hari ini sudah diatur ulang.");
+  });
 }
 
-$("#steps-reset").addEventListener("click", () => {
-  const confirmed = window.confirm(
-    "Reset checklist hari ini?"
-  );
+function renderHabits() {
+  const container = $("#habit-list");
+  if (!container) return;
 
-  if (!confirmed) return;
+  let data = readStorage(STORAGE_KEYS.habits, null);
 
-  try {
-    localStorage.removeItem(todayKey());
-    renderSteps();
-    showToast("Checklist hari ini sudah direset.");
-  } catch (error) {
-    showToast("Tidak dapat mereset checklist.");
+  if (!data || !Array.isArray(data.items)) {
+    data = {
+      date: todayString(),
+      items: DEFAULT_HABITS.map(item => ({ ...item }))
+    };
   }
-});
 
-renderSteps();
+  if (data.date !== todayString()) {
+    data = {
+      date: todayString(),
+      items: DEFAULT_HABITS.map(item => ({ ...item }))
+    };
+    saveStorage(STORAGE_KEYS.habits, data);
+  }
 
-// =========================================
-// 11. INITIALIZE
-// =========================================
+  const completed = data.items.filter(item => item.done).length;
+  const percent = Math.round((completed / Math.max(data.items.length, 1)) * 100);
 
-console.log("✳ Moodora berhasil dijalankan!");
+  container.innerHTML = data.items.map(item => `
+    <label class="habit-card">
+      <input
+        type="checkbox"
+        data-habit-id="${escapeHTML(item.id)}"
+        ${item.done ? "checked" : ""}
+      >
+      <span>${escapeHTML(item.text)}</span>
+    </label>
+  `).join("");
+
+  const progressBar = $("#steps-progress-bar");
+  const progressFill = $("#steps-progress-fill");
+  const progressText = $("#steps-progress-text");
+
+  if (progressBar) {
+    progressBar.style.width = `${percent}%`;
+    progressBar.setAttribute("aria-valuenow", String(percent));
+  }
+
+  if (progressFill) {
+    progressFill.style.width = `${percent}%`;
+    progressFill.setAttribute("aria-valuenow", String(percent));
+  }
+
+  if (progressText) {
+    progressText.textContent = `${completed} dari ${data.items.length} langkah selesai`;
+  }
+
+  $$("input[data-habit-id]", container).forEach(input => {
+    input.addEventListener("change", () => {
+      const current = readStorage(STORAGE_KEYS.habits, data);
+      const item = current.items.find(
+        habit => habit.id === input.dataset.habitId
+      );
+
+      if (!item) return;
+
+      item.done = input.checked;
+
+      if (saveStorage(STORAGE_KEYS.habits, current)) {
+        renderHabits();
+
+        if (input.checked) {
+          showToast("Satu langkah kecil berhasil kamu selesaikan. Keren!");
+        }
+      }
+    });
+  });
+}
+
+/* =========================================================
+   8. INTERAKSI KARTU DAN TOMBOL AJAKAN
+   ========================================================= */
+
+function initGeneralInteractions() {
+  // Tombol yang menuju ke bagian tertentu.
+  $$("[data-scroll-to]").forEach(button => {
+    button.addEventListener("click", () => {
+      const target = $(button.dataset.scrollTo);
+      scrollToElement(target);
+    });
+  });
+
+  // Tombol yang menuju ke fitur terkait.
+  bindClick("[data-go-journal]", () => scrollToElement($("#journal")));
+  bindClick("[data-go-calm]", () => scrollToElement($("#calm-corner")));
+  bindClick("[data-go-checkin]", () => scrollToElement($("#check-in")));
+  bindClick("[data-go-small-steps]", () => scrollToElement($("#small-steps")));
+
+  // Tombol yang mengisi prompt jurnal, jika ada.
+  $$("[data-journal-prompt]").forEach(button => {
+    button.addEventListener("click", () => {
+      const input = $("#journal-entry");
+      if (!input) return;
+
+      input.value = button.dataset.journalPrompt || "";
+      scrollToElement(input);
+      input.focus({ preventScroll: true });
+    });
+  });
+}
+
+/* =========================================================
+   9. PRIVASI DAN HAPUS DATA
+   ========================================================= */
+
+function initPrivacy() {
+  const deleteButton = $("#delete-all-data");
+  if (!deleteButton) return;
+
+  deleteButton.addEventListener("click", () => {
+    const confirmed = window.confirm(
+      "Hapus semua data Moodora yang tersimpan di browser ini? " +
+      "Data yang dihapus tidak bisa dikembalikan."
+    );
+
+    if (!confirmed) return;
+
+    Object.values(STORAGE_KEYS).forEach(key => {
+      localStorage.removeItem(key);
+    });
+
+    // Reset tampilan yang menampilkan data lokal.
+    renderMoodHistory();
+    renderMoodInsights();
+    renderJournals();
+
+    const habitList = $("#habit-list");
+    if (habitList) {
+      saveStorage(STORAGE_KEYS.habits, {
+        date: todayString(),
+        items: DEFAULT_HABITS.map(item => ({ ...item }))
+      });
+      renderHabits();
+    }
+
+    const moodResult = $("#mood-result");
+    if (moodResult) {
+      moodResult.textContent = "";
+      moodResult.hidden = true;
+    }
+
+    const questionnaireForm = $("#questionnaire-form");
+    const questionnaireResult = $("#reflection-result");
+    const startQuestionnaire = $("#start-questionnaire");
+
+    if (questionnaireForm) questionnaireForm.hidden = true;
+    if (questionnaireResult) questionnaireResult.hidden = true;
+    if (startQuestionnaire) startQuestionnaire.hidden = false;
+
+    $("#safety-support-message")?.remove();
+
+    const journalForm = $("#journal-form");
+    journalForm?.reset();
+
+    const editId = $("#journal-edit-id");
+    if (editId) editId.value = "";
+
+    showToast("Data Moodora di browser ini telah dihapus.");
+  });
+}
+
+/* =========================================================
+   10. EFEK MASUK SAAT SCROLL
+   ========================================================= */
+
+function initRevealAnimations() {
+  const elements = $$(".reveal-on-scroll");
+
+  if (!elements.length || !("IntersectionObserver" in window)) {
+    elements.forEach(element => element.classList.add("is-visible"));
+    return;
+  }
+
+  const reduceMotion = window.matchMedia(
+    "(prefers-reduced-motion: reduce)"
+  ).matches;
+
+  if (reduceMotion) {
+    elements.forEach(element => element.classList.add("is-visible"));
+    return;
+  }
+
+  const observer = new IntersectionObserver(entries => {
+    entries.forEach(entry => {
+      if (entry.isIntersecting) {
+        entry.target.classList.add("is-visible");
+        observer.unobserve(entry.target);
+      }
+    });
+  }, {
+    threshold: 0.12
+  });
+
+  elements.forEach(element => observer.observe(element));
+}
+
+/* =========================================================
+   11. INISIALISASI MOODORA
+   ========================================================= */
+
+function initMoodora() {
+  initNavigation();
+  initMoodCheckIn();
+  initQuestionnaire();
+  initBreathing();
+  initJournal();
+  initSmallSteps();
+  initGeneralInteractions();
+  initPrivacy();
+  initRevealAnimations();
+
+  console.info("Moodora berhasil diinisialisasi ✨");
+}
+
+if (document.readyState === "loading") {
+  document.addEventListener("DOMContentLoaded", initMoodora);
+} else {
+  initMoodora();
+}
