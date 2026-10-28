@@ -2003,3 +2003,11 @@ input[type="range"] {
     transition-duration: .01ms !important;
   }
 }
+
+/* Hilangkan garis kotak pada pilihan mood dan faktor mood */
+#mood-form fieldset {
+  border: none;
+  padding: 0;
+  margin: 0 0 28px;
+  min-width: 0;
+}
