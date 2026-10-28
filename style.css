@@ -2929,3 +2929,400 @@ select:focus {
     transition-duration: 0.01ms !important;
   }
 }
+
+/* ==========================================
+   MOODORA — DARK DREAMY THEME
+   Tambahkan di bagian paling bawah style.css
+   ========================================== */
+
+:root {
+  color-scheme: dark;
+  --mood-bg: #0b1020;
+  --mood-surface: #131b31;
+  --mood-surface-2: #1a2541;
+  --mood-border: rgba(164, 181, 255, 0.17);
+  --mood-text: #edf1ff;
+  --mood-muted: #a6b2d0;
+  --mood-blue: #8ba7ff;
+  --mood-purple: #b39aff;
+  --mood-cyan: #72e4ed;
+  --mood-radius: 22px;
+}
+
+html {
+  scroll-behavior: smooth;
+  scroll-padding-top: 100px;
+}
+
+body {
+  color: var(--mood-text);
+  background:
+    radial-gradient(ellipse at 15% 5%, #27346a55, transparent 35%),
+    radial-gradient(ellipse at 90% 30%, #572c7d30, transparent 32%),
+    var(--mood-bg);
+  background-attachment: fixed;
+}
+
+body,
+button,
+input,
+textarea,
+select {
+  font-family: inherit;
+}
+
+p,
+label,
+small {
+  color: var(--mood-muted);
+}
+
+h1,
+h2,
+h3,
+h4,
+strong,
+legend {
+  color: var(--mood-text);
+}
+
+/* Navbar gelap dengan efek kaca */
+header,
+nav,
+.navbar,
+.site-header {
+  background: rgba(11, 16, 32, 0.82);
+  border-color: var(--mood-border);
+}
+
+header,
+.navbar,
+.site-header {
+  backdrop-filter: blur(18px);
+  -webkit-backdrop-filter: blur(18px);
+}
+
+a {
+  color: var(--mood-blue);
+  transition: color 0.25s ease;
+}
+
+a:hover {
+  color: var(--mood-cyan);
+}
+
+/* Kartu dan panel */
+.card,
+.mood-card,
+.feature-card,
+.journal-entry,
+.question-card,
+.habit-card,
+[class*="card"] {
+  border-color: var(--mood-border);
+}
+
+.card,
+.feature-card,
+.journal-entry,
+.question-card {
+  background: linear-gradient(
+    145deg,
+    rgba(27, 39, 68, 0.94),
+    rgba(17, 25, 45, 0.96)
+  );
+  border: 1px solid var(--mood-border);
+  border-radius: var(--mood-radius);
+  box-shadow: 0 16px 45px rgba(0, 0, 0, 0.18);
+}
+
+.feature-card,
+.mood-card {
+  transition:
+    transform 0.3s ease,
+    border-color 0.3s ease,
+    box-shadow 0.3s ease;
+}
+
+.feature-card:hover,
+.mood-card:hover {
+  transform: translateY(-5px);
+  border-color: rgba(139, 167, 255, 0.55);
+  box-shadow: 0 18px 45px rgba(69, 91, 190, 0.18);
+}
+
+/* Mood pilihan */
+[data-mood],
+.answer-option,
+.habit-card {
+  cursor: pointer;
+}
+
+[data-mood] {
+  background: rgba(25, 36, 62, 0.9);
+  border: 1px solid var(--mood-border);
+  border-radius: 18px;
+  transition: 0.25s ease;
+}
+
+[data-mood]:hover,
+[data-mood].selected,
+[data-mood].is-selected {
+  background: linear-gradient(135deg, #354b85, #413367);
+  border-color: var(--mood-blue);
+  box-shadow: 0 0 24px rgba(139, 167, 255, 0.15);
+}
+
+/* Input dan slider */
+input:not([type="checkbox"]):not([type="radio"]):not([type="range"]),
+textarea,
+select {
+  color: var(--mood-text);
+  background: #10182c;
+  border: 1px solid var(--mood-border);
+  border-radius: 12px;
+}
+
+input[type="range"] {
+  accent-color: var(--mood-blue);
+  cursor: pointer;
+}
+
+input[type="checkbox"],
+input[type="radio"] {
+  accent-color: var(--mood-blue);
+}
+
+.intensity-value {
+  display: inline-block;
+  margin: 10px 0;
+  padding: 6px 12px;
+  color: var(--mood-cyan);
+  background: rgba(114, 228, 237, 0.09);
+  border: 1px solid rgba(114, 228, 237, 0.2);
+  border-radius: 999px;
+  font-weight: 700;
+}
+
+/* Tombol utama */
+button,
+.btn-primary,
+.nav-cta {
+  transition:
+    transform 0.2s ease,
+    box-shadow 0.2s ease,
+    background 0.2s ease;
+}
+
+button:hover,
+.btn-primary:hover,
+.nav-cta:hover {
+  transform: translateY(-2px);
+}
+
+button:focus-visible,
+a:focus-visible,
+input:focus-visible,
+textarea:focus-visible {
+  outline: 3px solid var(--mood-cyan);
+  outline-offset: 3px;
+}
+
+button:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+  transform: none;
+}
+
+/* Hero: kedalaman visual dan cahaya */
+.hero {
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+  background:
+    radial-gradient(ellipse at 75% 40%, #6e5bd42b, transparent 35%),
+    radial-gradient(ellipse at 15% 85%, #338da52b, transparent 32%);
+}
+
+.hero::before,
+.hero::after {
+  content: "";
+  position: absolute;
+  z-index: -1;
+  width: 280px;
+  aspect-ratio: 1;
+  border-radius: 50%;
+  filter: blur(65px);
+  opacity: 0.45;
+  pointer-events: none;
+  animation: moodoraFloat 9s ease-in-out infinite alternate;
+}
+
+.hero::before {
+  top: 3%;
+  right: 8%;
+  background: #6c68ff;
+}
+
+.hero::after {
+  bottom: -15%;
+  left: 18%;
+  background: #29c8d9;
+  animation-delay: -4s;
+}
+
+.hero h1 {
+  letter-spacing: -0.045em;
+  text-wrap: balance;
+}
+
+.hero h1 span,
+.gradient-text {
+  color: transparent;
+  background: linear-gradient(
+    100deg,
+    #9cb5ff,
+    #c4a5ff 52%,
+    #78e9ed
+  );
+  background-clip: text;
+  -webkit-background-clip: text;
+}
+
+/* Tambahkan class hero-visual pada area ilustrasi hero */
+.hero-visual {
+  position: relative;
+  perspective: 1000px;
+  transform-style: preserve-3d;
+}
+
+.hero-visual .hero-card {
+  position: relative;
+  transform: rotateY(-8deg) rotateX(4deg);
+  transform-style: preserve-3d;
+  background: linear-gradient(
+    145deg,
+    rgba(51, 66, 111, 0.86),
+    rgba(24, 30, 57, 0.96)
+  );
+  border: 1px solid rgba(190, 205, 255, 0.25);
+  border-radius: 28px;
+  box-shadow:
+    0 35px 80px rgba(0, 0, 0, 0.35),
+    inset 0 1px rgba(255, 255, 255, 0.12);
+  animation: moodoraCardFloat 6s ease-in-out infinite;
+}
+
+.hero-visual .orb {
+  position: absolute;
+  width: 74px;
+  aspect-ratio: 1;
+  border-radius: 50%;
+  background: radial-gradient(
+    circle at 30% 25%,
+    #e3e8ff,
+    #9c9aff 32%,
+    #6157bf 72%,
+    #37336e
+  );
+  box-shadow:
+    inset -8px -10px 18px #17183970,
+    0 0 38px #8e91ff55;
+  animation: moodoraOrbFloat 5s ease-in-out infinite;
+}
+
+.hero-visual .orb:nth-child(2) {
+  width: 38px;
+  animation-delay: -2s;
+}
+
+.hero-visual .orb:nth-child(3) {
+  width: 22px;
+  animation-delay: -3.5s;
+}
+
+/* Progress bar */
+#question-progress,
+#steps-progress-fill,
+#steps-progress-bar {
+  background-color: rgba(139, 167, 255, 0.16);
+  border-radius: 999px;
+  overflow: hidden;
+}
+
+#question-progress-fill,
+#steps-progress-fill,
+#steps-progress-bar {
+  background-image: linear-gradient(90deg, #8ba7ff, #b39aff, #72e4ed);
+  transition: width 0.35s ease;
+}
+
+/* Hasil dan notifikasi */
+#mood-result,
+#reflection-result,
+#safety-support-message {
+  color: var(--mood-text);
+  background: linear-gradient(135deg, #202f50, #292344);
+  border: 1px solid var(--mood-border);
+  border-radius: 18px;
+  padding: 20px;
+}
+
+#safety-support-message {
+  border-color: rgba(255, 178, 143, 0.5);
+}
+
+@keyframes moodoraFloat {
+  from {
+    transform: translate3d(-10px, -10px, 0) scale(0.95);
+  }
+  to {
+    transform: translate3d(25px, 20px, 0) scale(1.12);
+  }
+}
+
+@keyframes moodoraCardFloat {
+  0%, 100% {
+    transform: rotateY(-8deg) rotateX(4deg) translateY(0);
+  }
+  50% {
+    transform: rotateY(-4deg) rotateX(2deg) translateY(-9px);
+  }
+}
+
+@keyframes moodoraOrbFloat {
+  0%, 100% {
+    transform: translate3d(0, 0, 20px);
+  }
+  50% {
+    transform: translate3d(8px, -14px, 35px);
+  }
+}
+
+@media (max-width: 768px) {
+  body {
+    background-attachment: scroll;
+  }
+
+  .hero-visual .hero-card {
+    transform: none;
+    animation-duration: 8s;
+  }
+
+  .hero::before,
+  .hero::after {
+    width: 180px;
+    filter: blur(50px);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    scroll-behavior: auto !important;
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
