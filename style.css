@@ -2172,3 +2172,21 @@ section {
     transition: none;
   }
 }
+
+/* Menghilangkan border tombol di bagian Grounding */
+#calm-corner button,
+#calm-corner .btn-primary,
+#calm-corner .btn-secondary,
+#calm-corner [type="button"] {
+  border: 0 !important;
+  outline: none !important;
+  box-shadow: none !important;
+}
+
+/* Hilangkan outline saat tombol diklik */
+#calm-corner button:focus,
+#calm-corner button:focus-visible,
+#calm-corner button:active {
+  outline: none !important;
+  box-shadow: none !important;
+}
