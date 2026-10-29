@@ -948,7 +948,7 @@ input[type="range"] {
 }
 
 /* ========================================
-   MOOD GARDEN
+   MOODORA — INTERACTIVE MOOD GARDEN
 ======================================== */
 
 .garden-panel {
@@ -976,28 +976,37 @@ input[type="range"] {
   font-weight: 800;
 }
 
+/* Area taman */
 .garden-visual {
   position: relative;
-  height: 280px;
+  isolation: isolate;
+  height: 300px;
   margin: 28px 0;
   overflow: hidden;
   border-radius: 20px;
-  background: linear-gradient(180deg, #dce7ff, #f6f0ff 68%, #e6f8f0);
+  background:
+    radial-gradient(circle at 20% 20%, #ffffffa8, transparent 25%),
+    linear-gradient(180deg, #dce7ff 0%, #f6f0ff 65%, #e6f8f0 100%);
 }
 
+/* Matahari */
 .garden-sun {
   position: absolute;
-  top: 25px;
+  z-index: -1;
+  top: 28px;
   right: 12%;
   width: 58px;
   height: 58px;
   border-radius: 50%;
   background: #ffe7a4;
   box-shadow: 0 0 40px #ffe7a466;
+  animation: gardenSunGlow 5s ease-in-out infinite;
 }
 
+/* Bukit */
 .garden-hill {
   position: absolute;
+  z-index: -1;
   bottom: -100px;
   width: 120%;
   height: 210px;
@@ -1017,13 +1026,19 @@ input[type="range"] {
   transform: rotate(7deg);
 }
 
+/* Bunga dekorasi awal */
 .garden-plant {
   position: absolute;
   z-index: 2;
+  display: block;
   color: #6559cc;
   font-size: 2.5rem;
+  line-height: 1;
   filter: drop-shadow(0 5px 5px #00000015);
+  transform-origin: bottom center;
   animation: plantSway 4s ease-in-out infinite;
+  user-select: none;
+  pointer-events: none;
 }
 
 .plant-one {
@@ -1041,19 +1056,79 @@ input[type="range"] {
 .plant-three {
   right: 22%;
   bottom: 45px;
-  color: #fff0a6;
+  color: #c9a443;
   animation-delay: -2s;
 }
 
+/* Bunga yang ditambahkan melalui JavaScript */
+.garden-flower {
+  position: absolute;
+  z-index: 3;
+  bottom: 45px;
+  display: block;
+  font-size: 2rem;
+  line-height: 1;
+  transform-origin: bottom center;
+  filter: drop-shadow(0 4px 4px #00000018);
+  pointer-events: none;
+  user-select: none;
+  animation: flowerBloom .65s cubic-bezier(.2, .8, .3, 1.2) both,
+             plantSway 4s ease-in-out .65s infinite;
+}
+
+.garden-flower:nth-of-type(3n) {
+  color: #8175e8;
+}
+
+.garden-flower:nth-of-type(3n + 1) {
+  color: #ed91bd;
+}
+
+.garden-flower:nth-of-type(3n + 2) {
+  color: #e6b957;
+}
+
+/* Kupu-kupu dekoratif */
+.garden-butterfly {
+  position: absolute;
+  z-index: 4;
+  top: 38%;
+  left: 12%;
+  font-size: 1.5rem;
+  pointer-events: none;
+  animation: butterflyFly 8s ease-in-out infinite alternate;
+}
+
+.garden-butterfly-two {
+  top: 24%;
+  left: 65%;
+  font-size: 1.2rem;
+  animation-delay: -4s;
+  animation-duration: 10s;
+}
+
+/* Bintang kecil */
 .garden-stars {
   position: absolute;
   top: 40px;
   left: 15%;
   color: #8175e8;
   font-size: 1.4rem;
+  animation: starFloat 5s ease-in-out infinite;
+  pointer-events: none;
+}
+
+/* Animasi pertumbuhan */
+.garden-visual.garden-growing .garden-hill-front {
+  animation: hillBreathe 6s ease-in-out infinite;
+}
+
+.garden-progress {
+  align-items: center;
 }
 
 .garden-count {
+  min-width: 80px;
   text-align: center;
   color: #6559cc;
 }
@@ -1066,6 +1141,77 @@ input[type="range"] {
 
 .garden-count small {
   color: var(--muted);
+}
+
+@keyframes flowerBloom {
+  from {
+    opacity: 0;
+    transform: translateY(15px) scale(.15) rotate(-20deg);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1) rotate(0);
+  }
+}
+
+@keyframes gardenSunGlow {
+  0%, 100% {
+    box-shadow: 0 0 25px #ffe7a455;
+  }
+  50% {
+    box-shadow: 0 0 48px #ffe7a4aa;
+  }
+}
+
+@keyframes butterflyFly {
+  0% {
+    transform: translate(0, 0) rotate(-10deg);
+  }
+  30% {
+    transform: translate(35px, -16px) rotate(8deg);
+  }
+  65% {
+    transform: translate(75px, 10px) rotate(-8deg);
+  }
+  100% {
+    transform: translate(110px, -12px) rotate(10deg);
+  }
+}
+
+@keyframes hillBreathe {
+  0%, 100% {
+    transform: rotate(7deg) translateY(0);
+  }
+  50% {
+    transform: rotate(7deg) translateY(-5px);
+  }
+}
+
+/* Tampilan HP */
+@media (max-width: 700px) {
+  .garden-visual {
+    height: 240px;
+  }
+
+  .garden-plant {
+    font-size: 2rem;
+  }
+
+  .garden-flower {
+    font-size: 1.65rem;
+  }
+
+  .garden-butterfly {
+    font-size: 1.2rem;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .garden-visual *,
+  .garden-visual::before,
+  .garden-visual::after {
+    animation: none !important;
+  }
 }
 
 /* ========================================
