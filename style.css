@@ -2190,3 +2190,26 @@ section {
   outline: none !important;
   box-shadow: none !important;
 }
+
+/* Memperjelas warna teks pada Mood Check-in */
+#mood-form .form-group legend,
+#mood-form .form-group label,
+#mood-form h2,
+#mood-form h3,
+#mood-form p {
+  color: #ffffff;
+}
+
+/* Judul langkah No. 1, No. 2, dan No. 3 */
+#mood-form .step-title,
+#mood-form .form-title,
+#mood-form .question-title {
+  color: #ffffff !important;
+}
+
+/* Teks penjelasan dan intensitas mood */
+#mood-form .intensity-label,
+#mood-form .intensity-value,
+#mood-form .form-group span {
+  color: #ffffff;
+}
