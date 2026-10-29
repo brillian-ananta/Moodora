@@ -2282,3 +2282,34 @@ section {
   outline: none;
   box-shadow: none;
 }
+
+/* Hilangkan border tombol hapus di Your Private Space */
+#journal-list button,
+#journal-list .button,
+#journal-list .delete-button,
+#journal-list [class*="delete"],
+#journal-list [class*="remove"] {
+  border: none !important;
+  outline: none !important;
+  box-shadow: none !important;
+}
+
+/* Hilangkan border tombol hapus surat masa depan */
+#letter-list button,
+#letter-list .button,
+#letter-list .delete-button,
+#letter-list [class*="delete"],
+#letter-list [class*="remove"] {
+  border: none !important;
+  outline: none !important;
+  box-shadow: none !important;
+}
+
+/* Hilangkan outline ketika tombol diklik atau difokuskan */
+#journal-list button:focus,
+#journal-list button:active,
+#letter-list button:focus,
+#letter-list button:active {
+  outline: none !important;
+  box-shadow: none !important;
+}
