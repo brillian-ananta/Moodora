@@ -2688,3 +2688,25 @@ section {
     grid-template-columns: 1fr;
   }
 }
+
+/* MOODORA - paksa teks pilihan tampil */
+#mood-form .mood-options .mood-option,
+#mood-form .mood-options .mood-option span,
+#mood-form .factor-options label {
+  color: #25243a !important;
+  -webkit-text-fill-color: #25243a !important;
+  font-size: 15px !important;
+  visibility: visible !important;
+  opacity: 1 !important;
+  text-indent: 0 !important;
+}
+
+#mood-form .mood-options .mood-option .mood-emoji {
+  font-size: 30px !important;
+}
+
+#mood-form .factor-options label {
+  display: flex !important;
+  align-items: center;
+  gap: 10px;
+}
