@@ -2750,3 +2750,24 @@ section {
   stroke: #ffffff;
   stroke-width: 2;
 }
+
+/* FIX: ukuran grafik Peta Perasaan */
+.constellation-visual {
+  display: block;
+  position: relative;
+  width: 100%;
+  min-height: 260px;
+}
+
+#constellation-chart {
+  display: block !important;
+  width: 100% !important;
+  height: 250px !important;
+  min-height: 250px;
+  visibility: visible;
+  overflow: visible;
+}
+
+#constellation-chart[hidden] {
+  display: none !important;
+}
