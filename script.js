@@ -721,6 +721,12 @@ console.log("Elemen points:", $("#constellation-points"));
       </circle>
     `).join("");
 
+    console.log("Koordinat garis:", line.getAttribute("points"));
+console.log("Jumlah titik grafik:", points.querySelectorAll("circle").length);
+console.log("Chart hidden:", chart.hidden);
+console.log("Ukuran chart:", chart.getBoundingClientRect().width,
+  chart.getBoundingClientRect().height);
+
     if (moods.length < 3) {
       $("#constellation-summary").textContent =
         "Tambahkan beberapa check-in lagi untuk mengamati pola.";
