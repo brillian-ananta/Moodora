@@ -2313,3 +2313,85 @@ section {
   outline: none !important;
   box-shadow: none !important;
 }
+
+/* ========================================
+   MOODORA — CONSISTENT BACKGROUND DECOR
+   Dekorasi seragam untuk semua section
+======================================== */
+
+/* Menjaga dekorasi berada di belakang konten */
+.section:not(.hero) {
+  isolation: isolate;
+}
+
+/* Lingkaran dekoratif utama */
+.section:not(.hero)::before {
+  content: "";
+  position: absolute;
+  z-index: -1;
+  pointer-events: none;
+
+  width: 340px;
+  height: 340px;
+  top: 5%;
+  left: -170px;
+
+  border-radius: 50%;
+  background: linear-gradient(
+    135deg,
+    #8175e825,
+    #789cf510,
+    #8bd6bd08
+  );
+
+  filter: blur(3px);
+}
+
+/* Lingkaran kedua + aksen titik */
+.section:not(.hero)::after {
+  content: "";
+  position: absolute;
+  z-index: -1;
+  pointer-events: none;
+
+  width: 250px;
+  height: 250px;
+  right: -100px;
+  bottom: 5%;
+
+  border-radius: 50%;
+  background:
+    radial-gradient(
+      circle at 30% 30%,
+      #8bd6bd25 0 3px,
+      transparent 4px
+    ),
+    radial-gradient(
+      circle at 70% 65%,
+      #8175e825 0 4px,
+      transparent 5px
+    ),
+    linear-gradient(
+      135deg,
+      #8175e820,
+      #789cf510 65%,
+      transparent
+    );
+
+  filter: blur(2px);
+}
+
+/* Ukuran dekorasi disesuaikan untuk HP */
+@media (max-width: 600px) {
+  .section:not(.hero)::before {
+    width: 230px;
+    height: 230px;
+    left: -130px;
+  }
+
+  .section:not(.hero)::after {
+    width: 180px;
+    height: 180px;
+    right: -90px;
+  }
+}
