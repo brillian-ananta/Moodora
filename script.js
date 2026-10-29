@@ -514,42 +514,151 @@ document.addEventListener("DOMContentLoaded", () => {
     intro.hidden = false;
   });
 
+ // ========================================
+  // MOOD GARDEN — INTERACTIVE FLOWERS
   // ========================================
-  // MOOD GARDEN
-  // ========================================
 
-  function updateGarden() {
-    $("#garden-count").textContent = gardenCount;
+  const gardenVisual = $("#garden-visual");
+  const gardenButton = $("#garden-action");
 
-    $("#garden-status").textContent =
-      gardenCount === 0 ? "Siap bertumbuh" :
-      gardenCount < 3 ? "Tunas pertama muncul" :
-      gardenCount < 7 ? "Mulai bermekaran" :
-      "Tamanmu terus tumbuh";
+  // Jumlah langkah dan jumlah bunga disimpan terpisah.
+  const savedGardenFlowers = load("moodora_garden_flowers_v1", []);
+  let gardenFlowers = Array.isArray(savedGardenFlowers)
+    ? savedGardenFlowers
+    : [];
 
-    $("#garden-message").textContent = gardenCount === 0
-      ? "Mulai dengan satu langkah kecil hari ini."
-      : `Kamu sudah merawat taman ini ${gardenCount} kali. Setiap langkah kecil berarti.`;
+  const flowerSymbols = ["✿", "❀", "✽", "❋", "✾"];
+  const flowerColors = [
+    "#8175e8",
+    "#ed91bd",
+    "#e6b957",
+    "#789cf5",
+    "#e58db9"
+  ];
 
-    const visual = $("#garden-visual");
-    if (visual) {
-      visual.dataset.growth = String(Math.min(gardenCount, 7));
-      visual.classList.toggle("garden-growing", gardenCount > 0);
+  // Tambahkan kupu-kupu hanya jika belum ada.
+  function prepareGarden() {
+    if (!gardenVisual) return;
+
+    if (!gardenVisual.querySelector(".garden-butterfly")) {
+      const butterfly = document.createElement("span");
+      butterfly.className = "garden-butterfly";
+      butterfly.setAttribute("aria-hidden", "true");
+      butterfly.textContent = "🦋";
+      gardenVisual.appendChild(butterfly);
+    }
+
+    if (!gardenVisual.querySelector(".garden-butterfly-two")) {
+      const butterfly = document.createElement("span");
+      butterfly.className = "garden-butterfly garden-butterfly-two";
+      butterfly.setAttribute("aria-hidden", "true");
+      butterfly.textContent = "🦋";
+      gardenVisual.appendChild(butterfly);
     }
   }
 
-  $("#garden-action")?.addEventListener("click", () => {
-    gardenCount++;
+  function renderGardenFlowers() {
+    if (!gardenVisual) return;
 
-    if (save(KEYS.garden, gardenCount)) {
-      updateGarden();
-      toast("Satu langkah kecil untuk tamanmu tersimpan.");
-    } else {
-      gardenCount--;
+    // Hapus bunga dinamis lama sebelum menggambar ulang.
+    gardenVisual.querySelectorAll(".garden-flower").forEach(flower => {
+      flower.remove();
+    });
+
+    gardenFlowers.forEach((flower, index) => {
+      const plant = document.createElement("span");
+      plant.className = "garden-flower";
+      plant.setAttribute("aria-hidden", "true");
+      plant.textContent = flower.symbol || flowerSymbols[index % flowerSymbols.length];
+
+      // Posisi tersebar di sepanjang bukit.
+      plant.style.left = `${8 + (index * 17.3) % 84}%`;
+      plant.style.bottom = `${25 + (index * 13) % 48}px`;
+      plant.style.color = flower.color || flowerColors[index % flowerColors.length];
+      plant.style.animationDelay = `${Math.min(index * 0.04, 0.5)}s`;
+
+      gardenVisual.appendChild(plant);
+    });
+
+    gardenVisual.dataset.growth = String(
+      Math.min(gardenCount + gardenFlowers.length, 20)
+    );
+
+    gardenVisual.classList.toggle(
+      "garden-growing",
+      gardenCount > 0 || gardenFlowers.length > 0
+    );
+  }
+
+  function updateGarden() {
+    const countElement = $("#garden-count");
+    const statusElement = $("#garden-status");
+    const messageElement = $("#garden-message");
+
+    if (countElement) countElement.textContent = gardenCount;
+
+    if (statusElement) {
+      statusElement.textContent =
+        gardenFlowers.length === 0 ? "Siap bertumbuh" :
+        gardenFlowers.length < 3 ? "Tunas pertama muncul" :
+        gardenFlowers.length < 7 ? "Mulai bermekaran" :
+        "Tamanmu terus tumbuh";
     }
-  });
 
-  // ========================================
+    if (messageElement) {
+      messageElement.textContent = gardenFlowers.length === 0
+        ? "Mulai dengan satu langkah kecil hari ini."
+        : `Kamu sudah menumbuhkan ${gardenFlowers.length} bunga. Setiap langkah kecil berarti.`;
+    }
+
+    prepareGarden();
+    renderGardenFlowers();
+  }
+
+  gardenButton?.addEventListener("click", () => {
+    const newFlower = {
+      symbol: flowerSymbols[Math.floor(Math.random() * flowerSymbols.length)],
+      color: flowerColors[Math.floor(Math.random() * flowerColors.length)]
+    };
+
+    // Simpan data lama agar bisa dipulihkan jika penyimpanan gagal.
+    const previousCount = gardenCount;
+    const previousFlowers = [...gardenFlowers];
+
+    gardenCount++;
+    gardenFlowers.push(newFlower);
+
+    const countSaved = save(KEYS.garden, gardenCount);
+    const flowersSaved = save("moodora_garden_flowers_v1", gardenFlowers);
+
+    if (!countSaved || !flowersSaved) {
+      gardenCount = previousCount;
+      gardenFlowers = previousFlowers;
+      
+      gardenFlowers.push({
+  symbol: flowerSymbols[
+    Math.floor(Math.random() * flowerSymbols.length)
+  ],
+  color: flowerColors[
+    Math.floor(Math.random() * flowerColors.length)
+  ]
+});
+
+save("moodora_garden_flowers_v1", gardenFlowers);
+
+      // Pulihkan nilai yang masih bisa disimpan.
+      save(KEYS.garden, gardenCount);
+      save("moodora_garden_flowers_v1", gardenFlowers);
+
+      updateGarden();
+      return;
+    }
+
+    updateGarden();
+    toast("Satu bunga baru tumbuh di tamanmu! 🌷");
+  });
+  
+  // =======================================
   // EMOTION CONSTELLATION
   // ========================================
 
