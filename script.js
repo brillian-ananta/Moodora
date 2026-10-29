@@ -661,12 +661,24 @@ save("moodora_garden_flowers_v1", gardenFlowers);
   // =======================================
   // EMOTION CONSTELLATION
   // ========================================
+  
+  function renderConstellation() {
+  console.log("Data moods:", moods);
+  console.log("Jumlah mood:", moods.length);
 
+  // lanjutkan kode renderConstellation() milik lo
+}
+  
   function renderConstellation() {
     const empty = $("#constellation-empty");
     const chart = $("#constellation-chart");
     const line = $("#constellation-line");
     const points = $("#constellation-points");
+
+    console.log("Jumlah moods:", moods.length);
+console.log("Isi moods:", moods);
+console.log("Elemen chart:", $("#constellation-chart"));
+console.log("Elemen points:", $("#constellation-points"));
 
     $("#constellation-count").textContent = `${moods.length} catatan`;
 
