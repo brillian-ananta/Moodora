@@ -2257,3 +2257,28 @@ section {
 #check-in .mood-form .form-group {
   color: #ffffff;
 }
+
+/* Hilangkan border tombol hapus catatan dan surat */
+
+/* Your Private Space — Hapus Catatan */
+#journal .button,
+#journal button,
+#journal .delete-button,
+
+/* Surat untuk Diriku di Masa Depan — Hapus Surat */
+#future-letter .button,
+#future-letter button,
+#future-letter .delete-button {
+  border: none !important;
+  outline: none;
+  box-shadow: none;
+}
+
+/* Hilangkan garis saat tombol berinteraksi */
+#journal button:focus,
+#journal button:active,
+#future-letter button:focus,
+#future-letter button:active {
+  outline: none;
+  box-shadow: none;
+}
