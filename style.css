@@ -2541,3 +2541,31 @@ section {
     right: -90px;
   }
 }
+
+/* FIX: Pilihan mood */
+.mood-option,
+.mood-card,
+.mood-choice {
+  color: #25243a;
+}
+
+.mood-option *,
+.mood-card *,
+.mood-choice * {
+  visibility: visible;
+  opacity: 1;
+}
+
+/* FIX: Pilihan faktor yang memengaruhi mood */
+.factor-option,
+.mood-factor,
+.checkbox-option {
+  color: #25243a;
+}
+
+.factor-option *,
+.mood-factor *,
+.checkbox-option * {
+  visibility: visible;
+  opacity: 1;
+}
