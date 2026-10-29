@@ -2213,3 +2213,47 @@ section {
 #mood-form .form-group span {
   color: #ffffff;
 }
+
+/* =====================================
+   FIX WARNA TEKS MOOD CHECK-IN
+   ===================================== */
+
+/* Judul section */
+#check-in .section-heading .eyebrow,
+#check-in .section-heading .section-title,
+#check-in .section-heading .section-description {
+  color: #ffffff !important;
+}
+
+/* Judul nomor 1 dan nomor 3 */
+#check-in .mood-form legend {
+  color: #ffffff !important;
+}
+
+/* Judul nomor 2 dan nomor 4 */
+#check-in .mood-form > .form-group > label {
+  color: #ffffff !important;
+}
+
+/* Teks Intensitas dan angka 3 / 5 */
+#check-in .range-header,
+#check-in #intensity-value,
+#check-in .range-labels span {
+  color: #ffffff !important;
+}
+
+/* Keterangan di bawah setiap pertanyaan */
+#check-in .field-hint {
+  color: #e0e0ee !important;
+}
+
+/* Pilihan mood dan faktor */
+#check-in .mood-option,
+#check-in .factor-options label {
+  color: #ffffff !important;
+}
+
+/* Label nomor 1, 2, 3, dan 4 */
+#check-in .mood-form .form-group {
+  color: #ffffff;
+}
