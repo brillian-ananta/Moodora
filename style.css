@@ -2710,3 +2710,43 @@ section {
   align-items: center;
   gap: 10px;
 }
+
+/* Perbaikan tampilan grafik Peta Perasaan */
+#constellation-visual {
+  position: relative;
+  width: 100%;
+  min-height: 250px;
+  overflow: hidden;
+}
+
+#constellation-chart {
+  display: block;
+  width: 100%;
+  height: auto;
+  min-height: 200px;
+  overflow: visible;
+}
+
+#constellation-chart[hidden],
+#constellation-empty[hidden] {
+  display: none !important;
+}
+
+#constellation-chart .chart-grid line {
+  stroke: rgba(160, 140, 190, 0.25);
+  stroke-width: 1;
+}
+
+#constellation-chart .chart-line {
+  fill: none;
+  stroke: #a78bfa;
+  stroke-width: 3;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+#constellation-chart .chart-point {
+  fill: #a78bfa;
+  stroke: #ffffff;
+  stroke-width: 2;
+}
