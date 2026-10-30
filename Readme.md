@@ -104,11 +104,9 @@ Kunjungi repositori GitHub Moodora melalui tautan berikut:
 
 1. Buka repositori Moodora di GitHub.
 2. Pergi ke Page Action di bar atas GitHub.
-3. Ekstrak file ZIP yang sudah diunduh.
-4. Buka folder hasil ekstraksi.
-5. Cari file "index.html".
-6. Klik dua kali file tersebut atau buka menggunakan browser.
-7. Website Moodora akan ditampilkan dan dapat digunakan.
+3. Klik Page Build And Deployment.
+4. Klik Link yang akan disediakan oleh GitHub.
+5. Website Moodora akan ditampilkan dan dapat digunakan.
 
 3. Menggunakan Fitur Moodora
 
