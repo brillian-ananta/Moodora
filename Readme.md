@@ -103,7 +103,7 @@ Kunjungi repositori GitHub Moodora melalui tautan berikut:
 2. Menjalankan Website Secara Lokal
 
 1. Buka repositori Moodora di GitHub.
-2. Unduh kode sumber melalui menu Code → Download ZIP.
+2. Pergi ke Page Action di bar atas GitHub.
 3. Ekstrak file ZIP yang sudah diunduh.
 4. Buka folder hasil ekstraksi.
 5. Cari file "index.html".
@@ -125,8 +125,7 @@ Catatan: Moodora merupakan media refleksi diri, bukan pengganti diagnosis maupun
 Website direncanakan untuk dipublikasikan menggunakan GitHub Pages. Setelah publikasi diaktifkan, tautan website aktif dapat ditambahkan di bawah ini.
 
 - Repositori: https://github.com/brillian-ananta/Moodora
-- Website Aktif: Tambahkan URL GitHub Pages setelah publikasi berhasil.
-
+- Website Aktif: https://brillian-ananta.github.io/Moodora/
 ---
 
 E. Identitas Pengembang
